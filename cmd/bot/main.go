@@ -14,7 +14,17 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const banner = `
+       __          __          __          __
+  ____/ /__ _   __/ /_  __  __/ /_  ____  / /_
+ / __  / _ \ | / / __ \/ / / / __ \/ __ \/ __/
+/ /_/ /  __/ |/ / / / / /_/ / /_/ / /_/ / /_
+\__,_/\___/|___/_/ /_/\__,_/_.___/\____/\__/
+`
+
 func main() {
+
+	fmt.Println(string("\033[35m"), banner, string("\033[0m"))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
