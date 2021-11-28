@@ -5,9 +5,9 @@ import (
 	"bot/internal/discord"
 	"bot/pkg/colors"
 	"bot/pkg/env"
+	"bot/pkg/infra"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,14 +25,20 @@ const banner = `
 
 func main() {
 
-	fmt.Println(colors.Purple, banner, colors.Reset)
+	env.Env = env.GetString("ENV", "local")
+
+	infra.InitLogging(env.GetString("LOG_LEVEL", "info"))
+
+	if env.IsLocal() {
+		fmt.Println(colors.Purple, banner, colors.Reset)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	session, err := discordgo.New("Bot " + env.GetString("DISCORD_BOT_TOKEN", ""))
 	if err != nil {
-		log.Fatal(err)
+		infra.Logger.Fatal().Err(err).Msg("discordgo new session")
 	}
 
 	discordSvc := discord.NewDiscordService(session)
@@ -41,14 +47,14 @@ func main() {
 	go func() {
 		err := bot.Start(ctx)
 		if err != nil && err != context.Canceled {
-			log.Fatal(err)
+			infra.Logger.Fatal().Err(err).Msg("bot start")
 		}
 	}()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 
-	fmt.Println("Listening for interupt and term signals")
+	infra.Logger.Info().Msg("Listening for interupt and term signals")
 
 	<-stop
 

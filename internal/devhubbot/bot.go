@@ -2,8 +2,8 @@ package devhubbot
 
 import (
 	"bot/internal/discord"
+	"bot/pkg/infra"
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -19,7 +19,7 @@ func NewBot(discordSvc discord.DiscordServicer) *Bot {
 }
 
 func (b Bot) Start(ctx context.Context) error {
-	fmt.Println("starting bot")
+	infra.Logger.Info().Msg("starting bot")
 
 	err := b.discordSvc.Open()
 	if err != nil {
@@ -33,7 +33,7 @@ func (b Bot) Start(ctx context.Context) error {
 }
 
 func (b Bot) Stop() error {
-	fmt.Println("stopping bot")
+	infra.Logger.Info().Msg("stopping bot")
 
 	err := b.discordSvc.Close()
 	if err != nil {
