@@ -45,6 +45,8 @@ func main() {
 	bot := devhubbot.NewBot(discordSvc)
 
 	go func() {
+		infra.Logger.Info().Msg("starting bot")
+
 		err := bot.Start(ctx)
 		if err != nil && err != context.Canceled {
 			infra.Logger.Fatal().Err(err).Msg("bot start")
@@ -60,6 +62,10 @@ func main() {
 
 	cancel()
 
-	bot.Stop()
+	infra.Logger.Info().Msg("stopping bot")
+	err = bot.Stop()
+	if err != nil {
+		infra.Logger.Fatal().Err(err).Msg("bot stop")
+	}
 
 }
