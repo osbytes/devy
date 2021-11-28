@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"github.com/bwmarrin/discordgo"
+	"bot/envars"
+	"bot/app"
 )
 
+func init() {
+	envars.LoadEnvs()
+}
+
 func main() {
-	discord, err := discordgo.New("Bot " + "authentication token")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(discord)
+	app.Run()
 }

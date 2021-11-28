@@ -2,16 +2,28 @@
 
 Discord bot for dev hub discord channel
 
+## Run
+
+Run the following command to run the application.
+
+ ```Go
+godotenv -f .env go run main.go 
+ ```
+
 ## Stack
 
-Go v1.17
-Discord
+* Go v1.17
+* Discord
 
 ## How to Contribute
 
 * Fork the project
 * Push changes
 * Create a PR and add reveiwers
+
+## How to Test on a Test Bot
+
+
 
 ## Ideas
 
