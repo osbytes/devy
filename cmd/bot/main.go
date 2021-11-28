@@ -3,6 +3,7 @@ package main
 import (
 	"bot/internal/devhubbot"
 	"bot/internal/discord"
+	"bot/pkg/colors"
 	"bot/pkg/env"
 	"context"
 	"fmt"
@@ -24,7 +25,7 @@ const banner = `
 
 func main() {
 
-	fmt.Println(string("\033[35m"), banner, string("\033[0m"))
+	fmt.Println(colors.Purple, banner, colors.Reset)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
