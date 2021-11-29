@@ -4,10 +4,22 @@ Discord bot for dev hub discord channel
 
 ## Run
 
+Copy `.env.sample` to `.env` and add secrets
+
+```sh
+cp .env.sample .env
+```
+
+Install [godotenv](https://github.com/joho/godotenv)
+
+```sh
+go install github.com/joho/godotenv/cmd/godotenv@latest
+```
+
 Run the following command to run the application.
 
- ```Go
-godotenv -f .env go run main.go 
+ ```sh
+godotenv -f .env go run cmd/bot/main.go
  ```
 
 ## Stack
@@ -34,3 +46,12 @@ godotenv -f .env go run main.go
 * [ ] Coding challenges and scoreboards
 * [ ] Maybe something with leetcode
 * [ ] New Job openings for those looking for a new job
+
+## Known Issues
+
+Error displaying in console
+```sh
+YYYY/MM/DD hh:mm:ss error closing resp body
+```
+https://github.com/bwmarrin/discordgo/issues/1028
+https://github.com/golang/go/issues/49366
