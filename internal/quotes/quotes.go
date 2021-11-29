@@ -15,8 +15,8 @@ type Quote struct {
 	Category string
 }
 
-func (q *QuoteService) GetByTopic(ctx context.Context, topic string) (*Quote, error) {
-	quotes, err := q.quoteClient.Quotes(ctx, universalinspirationalquotes.QuotesOpts{
+func (qs *QuoteService) GetByTopic(ctx context.Context, topic string) (*Quote, error) {
+	quotes, err := qs.quoteClient.Quotes(ctx, universalinspirationalquotes.QuotesOpts{
 		Topics: []string{topic},
 		Limit:  1,
 	})
@@ -28,11 +28,13 @@ func (q *QuoteService) GetByTopic(ctx context.Context, topic string) (*Quote, er
 		return nil, ErrNotFound
 	}
 
+	q := quotes[0]
+
 	return &Quote{
-		Title:    quotes[0].Title,
-		Author:   quotes[0].Author,
-		URL:      quotes[0].URL,
-		Media:    quotes[0].Media,
-		Category: quotes[0].Category,
+		Title:    q.Title,
+		Author:   q.Author,
+		URL:      q.URL,
+		Media:    q.Media,
+		Category: q.Category,
 	}, nil
 }
