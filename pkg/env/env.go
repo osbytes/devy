@@ -7,13 +7,13 @@ var Env string
 const EnvLocal string = "local"
 const EnvProd string = "prod"
 
-func GetString(k string, d string) string {
-	v, exists := os.LookupEnv(k)
+func GetString(key string, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
 	if !exists {
-		return d
+		return defaultValue
 	}
 
-	return v
+	return value
 }
 
 func IsLocal() bool {

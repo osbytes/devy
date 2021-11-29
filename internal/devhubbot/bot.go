@@ -2,23 +2,26 @@ package devhubbot
 
 import (
 	"bot/internal/discord"
+	"bot/internal/quotes"
 	"context"
 
 	"github.com/pkg/errors"
 )
 
 type Bot struct {
-	discordSvc discord.DiscordServicer
+	discordService discord.DiscordServicer
+	quoteService   quotes.QuoteServicer
 }
 
-func NewBot(discordSvc discord.DiscordServicer) *Bot {
+func NewBot(discordService discord.DiscordServicer, quoteService quotes.QuoteServicer) *Bot {
 	return &Bot{
-		discordSvc: discordSvc,
+		discordService: discordService,
+		quoteService:   quoteService,
 	}
 }
 
 func (b Bot) Start(ctx context.Context) error {
-	err := b.discordSvc.Open()
+	err := b.discordService.Open()
 	if err != nil {
 		return errors.Wrap(err, "discord service open")
 	}
@@ -30,7 +33,7 @@ func (b Bot) Start(ctx context.Context) error {
 }
 
 func (b Bot) Stop() error {
-	err := b.discordSvc.Close()
+	err := b.discordService.Close()
 	if err != nil {
 		return errors.Wrap(err, "discord service close")
 	}
