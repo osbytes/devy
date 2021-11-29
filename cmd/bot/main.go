@@ -3,11 +3,14 @@ package main
 import (
 	"bot/internal/devhubbot"
 	"bot/internal/discord"
+	"bot/internal/quotes"
 	"bot/pkg/colors"
 	"bot/pkg/env"
 	"bot/pkg/infra"
+	"bot/pkg/universalinspirationalquotes"
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,11 +19,11 @@ import (
 )
 
 const banner = `
-       __          __          __          __
-  ____/ /__ _   __/ /_  __  __/ /_  ____  / /_
- / __  / _ \ | / / __ \/ / / / __ \/ __ \/ __/
-/ /_/ /  __/ |/ / / / / /_/ / /_/ / /_/ / /_
-\__,_/\___/|___/_/ /_/\__,_/_.___/\____/\__/
+     _            _           _     _           _
+  __| | _____   _| |__  _   _| |__ | |__   ___ | |_
+ / _  |/ _ \ \ / / '_ \| | | | '_ \| '_ \ / _ \| __|
+| (_| |  __/\ V /| | | | |_| | |_) | |_) | (_) | |_ 
+ \__,_|\___| \_/ |_| |_|\__,_|_.__/|_.__/ \___/ \__|
 `
 
 func main() {
@@ -41,8 +44,21 @@ func main() {
 		infra.Logger.Fatal().Err(err).Msg("discordgo new session")
 	}
 
-	discordSvc := discord.NewDiscordService(session)
-	bot := devhubbot.NewBot(discordSvc)
+	discordService := discord.NewDiscordService(session)
+
+	var quoteService quotes.QuoteServicer = &quotes.NOOPQuoteService{}
+
+	rapidAPIKeyUniversalInspirationalQuotes := env.GetString("RAPID_API_KEY_UNIVERSAL_INSPIRATIONAL_QUOTES", "")
+	if len(rapidAPIKeyUniversalInspirationalQuotes) > 0 {
+		quotesClient := universalinspirationalquotes.NewHTTPClient(&http.Client{}, rapidAPIKeyUniversalInspirationalQuotes)
+
+		quoteService = quotes.NewQuoteService(quotesClient)
+	}
+
+	bot := devhubbot.NewBot(devhubbot.BotOpts{
+		DiscordService: discordService,
+		QuoteService:   quoteService,
+	})
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")
