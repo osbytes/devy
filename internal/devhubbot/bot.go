@@ -13,15 +13,10 @@ type Bot struct {
 	quoteService   quotes.QuoteServicer
 }
 
-type BotOpts struct {
-	DiscordService discord.DiscordServicer
-	QuoteService   quotes.QuoteServicer
-}
-
-func NewBot(opts BotOpts) *Bot {
+func NewBot(discordService discord.DiscordServicer, quoteService quotes.QuoteServicer) *Bot {
 	return &Bot{
-		discordService: opts.DiscordService,
-		quoteService:   opts.QuoteService,
+		discordService: discordService,
+		quoteService:   quoteService,
 	}
 }
 

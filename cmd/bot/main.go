@@ -55,10 +55,7 @@ func main() {
 		quoteService = quotes.NewQuoteService(quotesClient)
 	}
 
-	bot := devhubbot.NewBot(devhubbot.BotOpts{
-		DiscordService: discordService,
-		QuoteService:   quoteService,
-	})
+	bot := devhubbot.NewBot(discordService, quoteService)
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")
