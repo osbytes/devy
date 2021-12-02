@@ -3,6 +3,7 @@ package main
 import (
 	"bot/internal/devhubbot"
 	"bot/internal/discord"
+	"bot/internal/github"
 	"bot/internal/quotes"
 	"bot/pkg/colors"
 	"bot/pkg/env"
@@ -16,6 +17,8 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/shurcooL/githubv4"
+	"golang.org/x/oauth2"
 )
 
 const banner = `
@@ -55,7 +58,16 @@ func main() {
 		quoteService = quotes.NewQuoteService(quotesClient)
 	}
 
-	bot := devhubbot.NewBot(discordService, quoteService)
+	src := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+	)
+	httpClient := oauth2.NewClient(context.Background(), src)
+
+	client := githubv4.NewClient(httpClient)
+
+	githubService := github.NewGithubService(client)
+
+	bot := devhubbot.NewBot(discordService, quoteService, githubService)
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")
