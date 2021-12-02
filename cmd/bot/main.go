@@ -59,7 +59,7 @@ func main() {
 	}
 
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+		&oauth2.Token{AccessToken: env.GetString("GITHUB_TOKEN", "")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
