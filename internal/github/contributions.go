@@ -13,14 +13,9 @@ type Day struct {
 	Weekday           int
 	Date              time.Time
 }
-
-type Week struct {
-	Days []Day
-}
-
 type Contributions struct {
 	TotalContributions int
-	Weeks              []Week
+	Days               []Day
 }
 
 func (g *GithubService) GetContributionsByUsername(ctx context.Context, username string) (*Contributions, error) {
@@ -50,11 +45,10 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, username
 
 	contributions := &Contributions{
 		TotalContributions: contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions,
-		Weeks:              []Week{},
+		Days:               []Day{},
 	}
 
 	for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
-		week := Week{}
 
 		for _, d := range w.ContributionDays {
 
@@ -63,14 +57,14 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, username
 				return nil, errors.Wrap(err, "parsing date")
 			}
 
-			week.Days = append(week.Days, Day{
+			contributions.Days = append(contributions.Days, Day{
 				ContributionCount: d.ContributionCount,
 				Weekday:           d.Weekday,
 				Date:              date,
 			})
+
 		}
 
-		contributions.Weeks = append(contributions.Weeks, week)
 	}
 
 	return contributions, nil
