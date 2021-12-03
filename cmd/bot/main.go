@@ -2,7 +2,6 @@ package main
 
 import (
 	"bot/internal/devhubbot"
-	"bot/internal/discord"
 	"bot/internal/github"
 	"bot/internal/quotes"
 	"bot/pkg/colors"
@@ -42,12 +41,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	session, err := discordgo.New("Bot " + env.GetString("DISCORD_BOT_TOKEN", ""))
+	discord, err := discordgo.New("Bot " + env.GetString("DISCORD_BOT_TOKEN", ""))
 	if err != nil {
-		infra.Logger.Fatal().Err(err).Msg("discordgo new session")
+		infra.Logger.Fatal().Err(err).Msg("discordgo new")
 	}
-
-	discordService := discord.NewDiscordService(session)
 
 	var quoteService quotes.QuoteServicer = &quotes.NOOPQuoteService{}
 
@@ -67,7 +64,7 @@ func main() {
 
 	githubService := github.NewGithubService(client)
 
-	bot := devhubbot.NewBot(discordService, quoteService, githubService)
+	bot := devhubbot.NewBot(discord, quoteService, githubService)
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")

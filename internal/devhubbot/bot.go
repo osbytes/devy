@@ -1,33 +1,37 @@
 package devhubbot
 
 import (
-	"bot/internal/discord"
 	"bot/internal/github"
 	"bot/internal/quotes"
 	"context"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
 
 type Bot struct {
-	discordService discord.DiscordServicer
-	quoteService   quotes.QuoteServicer
-	githubService  github.GithubServicer
+	discord       *discordgo.Session
+	quoteService  quotes.QuoteServicer
+	githubService github.GithubServicer
 }
 
-func NewBot(discordService discord.DiscordServicer, quoteService quotes.QuoteServicer, githubService github.GithubServicer) *Bot {
+func NewBot(discord *discordgo.Session, quoteService quotes.QuoteServicer, githubService github.GithubServicer) *Bot {
 	return &Bot{
-		discordService: discordService,
-		quoteService:   quoteService,
-		githubService:  githubService,
+		discord:       discord,
+		quoteService:  quoteService,
+		githubService: githubService,
 	}
 }
 
 func (b Bot) Start(ctx context.Context) error {
-	err := b.discordService.Open()
+	err := b.discord.Open()
 	if err != nil {
 		return errors.Wrap(err, "discord service open")
 	}
+
+	b.discord.AddHandler(b.guildCreate)
+
+	b.discord.AddHandler(b.messageCreate)
 
 	select {
 	case <-ctx.Done():
@@ -36,7 +40,7 @@ func (b Bot) Start(ctx context.Context) error {
 }
 
 func (b Bot) Stop() error {
-	err := b.discordService.Close()
+	err := b.discord.Close()
 	if err != nil {
 		return errors.Wrap(err, "discord service close")
 	}

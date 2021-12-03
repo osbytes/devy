@@ -8,6 +8,8 @@ import (
 
 type GithubServicer interface {
 	GetContributionsByUsername(ctx context.Context, username string) (*Contributions, error)
+	GetCurrentContributionStreakByUsername(ctx context.Context, username string) (*CurrentContributionStreak, error)
+	GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error)
 }
 
 type GithubService struct {
