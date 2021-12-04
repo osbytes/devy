@@ -41,8 +41,6 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(m.Content, "!streakcurrent") {
 
-		username := strings.TrimSpace(strings.Replace(m.Content, "!streakcurrent", "", 1))
-
 		// Find the channel that the message came from.
 		c, err := s.State.Channel(m.ChannelID)
 		if err != nil {
@@ -50,11 +48,20 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+		contentParts := strings.Split(strings.TrimSpace(m.Content), " ")
+		if len(contentParts) <= 1 {
+			_, _ = s.ChannelMessageSend(c.ID, "missing github username")
+
+			return
+		}
+
+		username := contentParts[1]
+
 		currentStreak, err := b.githubService.GetCurrentContributionStreakByUsername(ctx, username)
 		if err != nil {
 			infra.Logger.Error().Err(err).Msg("github service get current contribution streak by username")
 
-			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving current streak for user %s", username))
+			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving current streak for github user %s", username))
 
 			return
 		}
@@ -63,8 +70,6 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	} else if strings.HasPrefix(m.Content, "!streaklongest") {
 
-		username := strings.TrimSpace(strings.Replace(m.Content, "!streaklongest", "", 1))
-
 		// Find the channel that the message came from.
 		c, err := s.State.Channel(m.ChannelID)
 		if err != nil {
@@ -72,11 +77,20 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+		contentParts := strings.Split(strings.TrimSpace(m.Content), " ")
+		if len(contentParts) <= 1 {
+			_, _ = s.ChannelMessageSend(c.ID, "missing github username")
+
+			return
+		}
+
+		username := contentParts[1]
+
 		longestStreak, err := b.githubService.GetLongestContributionStreakByUsername(ctx, username)
 		if err != nil {
 			infra.Logger.Error().Err(err).Msg("github service get longest contribution streak by username")
 
-			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving longest streak for user %s", username))
+			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving longest streak for github user %s", username))
 
 			return
 		}
