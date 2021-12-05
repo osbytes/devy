@@ -1,18 +1,14 @@
 package devhubbot
 
 import (
-	"bot/pkg/infra"
-	"context"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 // This function will be called (due to AddHandler above) every time a new
 // guild is joined.
-func (b *Bot) guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
+func (b *Bot) guildCreate(session *discordgo.Session, event *discordgo.GuildCreate) {
 
 	if event.Guild.Unavailable {
 		return
@@ -20,7 +16,7 @@ func (b *Bot) guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 	for _, channel := range event.Guild.Channels {
 		if channel.ID == event.Guild.ID {
-			_, _ = s.ChannelMessageSend(channel.ID, "🤖 devhubbot reporting for duty")
+			_, _ = session.ChannelMessageSend(channel.ID, "🤖 devhubbot reporting for duty")
 			return
 		}
 	}
@@ -28,74 +24,43 @@ func (b *Bot) guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the autenticated bot has access to.
-func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (b *Bot) messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID {
+	if message.Author.ID == session.State.User.ID {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	if strings.HasPrefix(m.Content, "!streakcurrent") {
-
-		// Find the channel that the message came from.
-		c, err := s.State.Channel(m.ChannelID)
-		if err != nil {
-			// Could not find channel.
-			return
-		}
-
-		contentParts := strings.Split(strings.TrimSpace(m.Content), " ")
-		if len(contentParts) <= 1 {
-			_, _ = s.ChannelMessageSend(c.ID, "missing github username")
-
-			return
-		}
-
-		username := contentParts[1]
-
-		currentStreak, err := b.githubService.GetCurrentContributionStreakByUsername(ctx, username)
-		if err != nil {
-			infra.Logger.Error().Err(err).Msg("github service get current contribution streak by username")
-
-			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving current streak for github user %s", username))
-
-			return
-		}
-
-		_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("user %s %s", username, currentStreak.String()))
-
-	} else if strings.HasPrefix(m.Content, "!streaklongest") {
-
-		// Find the channel that the message came from.
-		c, err := s.State.Channel(m.ChannelID)
-		if err != nil {
-			// Could not find channel.
-			return
-		}
-
-		contentParts := strings.Split(strings.TrimSpace(m.Content), " ")
-		if len(contentParts) <= 1 {
-			_, _ = s.ChannelMessageSend(c.ID, "missing github username")
-
-			return
-		}
-
-		username := contentParts[1]
-
-		longestStreak, err := b.githubService.GetLongestContributionStreakByUsername(ctx, username)
-		if err != nil {
-			infra.Logger.Error().Err(err).Msg("github service get longest contribution streak by username")
-
-			_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("something went wrong retrieving longest streak for github user %s", username))
-
-			return
-		}
-
-		_, _ = s.ChannelMessageSend(c.ID, fmt.Sprintf("user %s %s", username, longestStreak.String()))
-
+	// Find the channel that the message came from.
+	channel, err := channelFromState(session.State, message.ChannelID)
+	if err != nil {
+		// Could not find channel.
+		return
 	}
+
+	commandName := strings.Split(message.Content, " ")[0]
+
+	if commandName == "!help" {
+		commandUsages := []string{}
+
+		for _, c := range commandMap {
+			commandUsages = append(commandUsages, c.Usage())
+		}
+
+		usage := strings.Join(commandUsages, "\n\n")
+
+		_, _ = channelMessageSend(session, channel.ID, usage)
+
+		return
+	}
+
+	command, exists := commandMap[commandName]
+
+	if !exists {
+		return
+	}
+
+	command.Handler(session, message, channel, b)
+
 }
