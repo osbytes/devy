@@ -1,7 +1,7 @@
 package github
 
 import (
-	"bot/pkg/date"
+
 	"context"
 	"fmt"
 	"sort"
@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrMissingUsername = errors.New("missing github username")
+	ErrToDateBeforeFromDate = errors.New("to date is before from date")
 )
 
 type Day struct {
@@ -32,12 +33,10 @@ type GetContributionsByUsernameOptions struct {
 }
 
 func (g *GithubService) GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error) {
-	var contributions *Contributions
-
 	if len(options.Username) == 0 {
 		return nil, ErrMissingUsername
 	}
-
+	
 	from, to := options.From, options.To
 
 	if to.IsZero() {
@@ -48,67 +47,25 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 		from = to.AddDate(-1, 0, 0)
 	}
 
-	years := date.GetYearsBetweenDates(from, to)
+	if to.Before(from) {
+		return nil, ErrToDateBeforeFromDate
+	}
 
-	contributions = &Contributions{
+	contributions := &Contributions{
 		TotalContributions: 			0,
 		Days:               []Day{},
 	}
 
-	if len(years) > 1 {
+	originalFrom := from
 
-		for _, year := range years {
+	for {
 
-			from = time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
-
-			var contributionsQueryMultiYear struct {
-				User struct {
-					ContributionsCollection struct {
-						ContributionCalendar struct {
-							TotalContributions int
-							Weeks              []struct {
-								ContributionDays []struct {
-									ContributionCount int
-									Weekday           int
-									Date              string
-								}
-							}
-						}
-					} `graphql:"contributionsCollection(from: $from)"`
-				} `graphql:"user(login: $username)"`
-			}
-
-			err := g.githubClient.Query(ctx, &contributionsQueryMultiYear, map[string]interface{}{
-				"username": githubv4.String(options.Username),
-				"from": githubv4.DateTime{ Time: from },
-			})
-			if err != nil {
-				return nil, errors.Wrap(err, "github client query")
-			}
-		
-			contributions.TotalContributions += contributionsQueryMultiYear.User.ContributionsCollection.ContributionCalendar.TotalContributions
-		
-			for _, w := range contributionsQueryMultiYear.User.ContributionsCollection.ContributionCalendar.Weeks {
-		
-				for _, d := range w.ContributionDays {
-		
-					date, err := time.Parse("2006-01-02", d.Date)
-					if err != nil {
-						return nil, errors.Wrap(err, "parsing date")
-					}
-		
-					contributions.Days = append(contributions.Days, Day{
-						ContributionCount: d.ContributionCount,
-						Weekday:           d.Weekday,
-						Date:              date,
-					})
-				}
-			}
+		from = to.AddDate(-1, 0, 0)
+		if from.Before(originalFrom) {
+			from = originalFrom
 		}
 
-	} else {
-
-		var contributionsQuerySingleYear struct {
+		var contributionsQuery struct {
 			User struct {
 				ContributionsCollection struct {
 					ContributionCalendar struct {
@@ -124,8 +81,8 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 				} `graphql:"contributionsCollection(from: $from, to: $to)"`
 			} `graphql:"user(login: $username)"`
 		}
-	
-		err := g.githubClient.Query(ctx, &contributionsQuerySingleYear, map[string]interface{}{
+
+		err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
 			"username": githubv4.String(options.Username),
 			"from": githubv4.DateTime{ Time: from },
 			"to": githubv4.DateTime{ Time: to },
@@ -134,9 +91,9 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			return nil, errors.Wrap(err, "github client query")
 		}
 	
-		contributions.TotalContributions = contributionsQuerySingleYear.User.ContributionsCollection.ContributionCalendar.TotalContributions
+		contributions.TotalContributions += contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions
 	
-		for _, w := range contributionsQuerySingleYear.User.ContributionsCollection.ContributionCalendar.Weeks {
+		for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
 	
 			for _, d := range w.ContributionDays {
 	
@@ -152,6 +109,12 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 				})
 			}
 		}
+
+		to = from.AddDate(0, 0, -1)
+
+		if from.Equal(originalFrom) {
+			break
+		}
 	}
 
 	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here
@@ -161,6 +124,33 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 
 	return contributions, nil
 }
+
+func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, username string) (*time.Time, error) {
+	var contributionYears struct {
+		User struct {
+			ContributionsCollection struct {
+				ContributionYears []int
+			} 
+		} `graphql:"user(login: $username)"`
+	}
+
+	err := g.githubClient.Query(ctx, &contributionYears, map[string]interface{}{
+		"username": githubv4.String(username),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "github client query")
+	}
+
+	years := contributionYears.User.ContributionsCollection.ContributionYears
+
+	firstYear := years[len(years) - 1]
+
+	t := time.Date(firstYear, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	return &t, nil
+}
+
+
 
 type CurrentContributionStreak struct {
 	Streak    int
@@ -218,8 +208,14 @@ func (c LongestContributionStreak) String() string {
 }
 
 func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error) {
+	year, err := g.GetFirstContributionYearByUsername(ctx, username)
+	if err != nil {
+		return nil, errors.Wrap(err, "get first contribution year by username")
+	}
+
 	options := GetContributionsByUsernameOptions{
-		From: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC),
+		From: *year,
+		To: time.Now(),
 		Username: username,
 	}
 

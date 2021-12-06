@@ -23,18 +23,3 @@ func SOY(t time.Time, loc *time.Location) time.Time {
 func EOY(t time.Time, loc *time.Location) time.Time {
 	return time.Date(t.Year(), 12, 31, 59, 59, 0, 0, loc)
 }
-
-// Returns a slice of int representing all years between two dates
-func GetYearsBetweenDates(startDate time.Time, endDate time.Time) []int {
-	years := []int{endDate.Year()}
-
-	yearDiff := endDate.Year() - startDate.Year()
-	
-	if yearDiff > 1 {
-		for i := 0; i < yearDiff; i++ {
-			years = append(years, years[i] - 1)
-		}
-	}
-
-	return years
-}
