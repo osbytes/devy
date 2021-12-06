@@ -65,7 +65,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			from = originalFrom
 		}
 
-		var contributionsQueryMultiYear struct {
+		var contributionsQuery struct {
 			User struct {
 				ContributionsCollection struct {
 					ContributionCalendar struct {
@@ -82,7 +82,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			} `graphql:"user(login: $username)"`
 		}
 
-		err := g.githubClient.Query(ctx, &contributionsQueryMultiYear, map[string]interface{}{
+		err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
 			"username": githubv4.String(options.Username),
 			"from": githubv4.DateTime{ Time: from },
 			"to": githubv4.DateTime{ Time: to },
@@ -91,9 +91,9 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			return nil, errors.Wrap(err, "github client query")
 		}
 	
-		contributions.TotalContributions += contributionsQueryMultiYear.User.ContributionsCollection.ContributionCalendar.TotalContributions
+		contributions.TotalContributions += contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions
 	
-		for _, w := range contributionsQueryMultiYear.User.ContributionsCollection.ContributionCalendar.Weeks {
+		for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
 	
 			for _, d := range w.ContributionDays {
 	
