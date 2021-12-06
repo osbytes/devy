@@ -55,6 +55,12 @@ var commandMap = map[string]Command{
 		Args:        []string{"github username"},
 		Handler:     streakLongestCommandHandler,
 	},
+	"!contributionstotal": {
+		Name:        "!contributionstotal",
+		Description: "get the all time total contribution of a github user",
+		Args:        []string{"github username"},
+		Handler:     contributionTotalCommandHandler,
+	},
 }
 
 func streakCurrentCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
@@ -105,4 +111,29 @@ func streakLongestCommandHandler(session *discordgo.Session, message *discordgo.
 	}
 
 	_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("user %s %s", username, longestStreak.String()))
+}
+
+func contributionTotalCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
+	if len(contentParts) <= 1 {
+		_, _ = channelMessageSend(session, channel.ID, "missing github username")
+
+		return
+	}
+
+	username := contentParts[1]
+
+	totalContributions, err := bot.githubService.GetTotalContributionsByUsername(ctx, username)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("github service get total contributions by username")
+
+		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving total contributions for user %s", username))
+
+		return
+	}
+
+	_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
 }

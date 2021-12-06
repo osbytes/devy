@@ -12,6 +12,7 @@ type GithubServicer interface {
 	GetCurrentContributionStreakByUsername(ctx context.Context, username string) (*CurrentContributionStreak, error)
 	GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error)
 	GetFirstContributionYearByUsername(ctx context.Context, username string) (*time.Time, error)
+	GetTotalContributionsByUsername(ctx context.Context, username string) (*TotalContribution, error)
 }
 
 type GithubService struct {
