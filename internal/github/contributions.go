@@ -1,7 +1,6 @@
 package github
 
 import (
-
 	"context"
 	"fmt"
 	"sort"
@@ -12,7 +11,7 @@ import (
 )
 
 var (
-	ErrMissingUsername = errors.New("missing github username")
+	ErrMissingUsername      = errors.New("missing github username")
 	ErrToDateBeforeFromDate = errors.New("to date is before from date")
 )
 
@@ -28,15 +27,15 @@ type Contributions struct {
 
 type GetContributionsByUsernameOptions struct {
 	Username string
-	From time.Time
-	To time.Time
+	From     time.Time
+	To       time.Time
 }
 
 func (g *GithubService) GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error) {
 	if len(options.Username) == 0 {
 		return nil, ErrMissingUsername
 	}
-	
+
 	from, to := options.From, options.To
 
 	if to.IsZero() {
@@ -52,7 +51,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 	}
 
 	contributions := &Contributions{
-		TotalContributions: 			0,
+		TotalContributions: 0,
 		Days:               []Day{},
 	}
 
@@ -84,24 +83,24 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 
 		err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
 			"username": githubv4.String(options.Username),
-			"from": githubv4.DateTime{ Time: from },
-			"to": githubv4.DateTime{ Time: to },
+			"from":     githubv4.DateTime{Time: from},
+			"to":       githubv4.DateTime{Time: to},
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "github client query")
 		}
-	
+
 		contributions.TotalContributions += contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions
-	
+
 		for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
-	
+
 			for _, d := range w.ContributionDays {
-	
+
 				date, err := time.Parse("2006-01-02", d.Date)
 				if err != nil {
 					return nil, errors.Wrap(err, "parsing date")
 				}
-	
+
 				contributions.Days = append(contributions.Days, Day{
 					ContributionCount: d.ContributionCount,
 					Weekday:           d.Weekday,
@@ -130,7 +129,7 @@ func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, 
 		User struct {
 			ContributionsCollection struct {
 				ContributionYears []int
-			} 
+			}
 		} `graphql:"user(login: $username)"`
 	}
 
@@ -143,14 +142,12 @@ func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, 
 
 	years := contributionYears.User.ContributionsCollection.ContributionYears
 
-	firstYear := years[len(years) - 1]
+	firstYear := years[len(years)-1]
 
 	t := time.Date(firstYear, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	return &t, nil
 }
-
-
 
 type CurrentContributionStreak struct {
 	Streak    int
@@ -158,7 +155,12 @@ type CurrentContributionStreak struct {
 }
 
 func (c CurrentContributionStreak) String() string {
-	return fmt.Sprintf("current contribution streak: %d days started at: %s", c.Streak, c.StartedAt.Format("2006-01-02"))
+	msg := fmt.Sprintf("current contribution streak: %d days", c.Streak)
+	if c.Streak > 0 {
+		msg = fmt.Sprintf("%s started at: %s", msg, c.StartedAt.Format("2006-01-02"))
+	}
+
+	return msg
 }
 
 func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Context, username string) (*CurrentContributionStreak, error) {
@@ -214,8 +216,8 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 	}
 
 	options := GetContributionsByUsernameOptions{
-		From: *year,
-		To: time.Now(),
+		From:     *year,
+		To:       time.Now(),
 		Username: username,
 	}
 
@@ -265,7 +267,7 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 }
 
 type TotalContribution struct {
-	Total    int
+	Total int
 }
 
 func (c TotalContribution) String() string {
@@ -277,9 +279,9 @@ func (g *GithubService) GetTotalContributionsByUsername(ctx context.Context, use
 	if err != nil {
 		return nil, errors.Wrap(err, "get first contribution year by username")
 	}
-	
+
 	options := GetContributionsByUsernameOptions{
-		From: *year,
+		From:     *year,
 		Username: username,
 	}
 
@@ -288,7 +290,7 @@ func (g *GithubService) GetTotalContributionsByUsername(ctx context.Context, use
 		return nil, errors.Wrap(err, "get contributions by username")
 	}
 
-	totalContributions := &TotalContribution{ Total: contributions.TotalContributions }
+	totalContributions := &TotalContribution{Total: contributions.TotalContributions}
 
 	return totalContributions, nil
 }
