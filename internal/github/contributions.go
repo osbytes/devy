@@ -273,8 +273,13 @@ func (c TotalContribution) String() string {
 }
 
 func (g *GithubService) GetTotalContributionsByUsername(ctx context.Context, username string) (*TotalContribution, error) {
+	year, err := g.GetFirstContributionYearByUsername(ctx, username)
+	if err != nil {
+		return nil, errors.Wrap(err, "get first contribution year by username")
+	}
+	
 	options := GetContributionsByUsernameOptions{
-		From: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC),
+		From: *year,
 		Username: username,
 	}
 

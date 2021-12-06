@@ -128,9 +128,9 @@ func contributionTotalCommandHandler(session *discordgo.Session, message *discor
 
 	totalContributions, err := bot.githubService.GetTotalContributionsByUsername(ctx, username)
 	if err != nil {
-		infra.Logger.Error().Err(err).Msg("github service get longest contribution streak by username")
+		infra.Logger.Error().Err(err).Msg("github service get total contributions by username")
 
-		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving longest streak for github user %s", username))
+		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving total contributions for user %s", username))
 
 		return
 	}
