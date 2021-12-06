@@ -267,3 +267,27 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 
 	return longestContributionStreak, nil
 }
+
+type TotalContribution struct {
+	Total    int
+}
+
+func (c TotalContribution) String() string {
+	return fmt.Sprintf("total github contributions: %d", c.Total)
+}
+
+func (g *GithubService) GetTotalContributionsByUsername(ctx context.Context, username string) (*TotalContribution, error) {
+	options := GetContributionsByUsernameOptions{
+		From: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC),
+		Username: username,
+	}
+
+	contributions, err := g.GetContributionsByUsername(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err, "get contributions by username")
+	}
+
+	totalContributions := &TotalContribution{ Total: contributions.TotalContributions }
+
+	return totalContributions, nil
+}
