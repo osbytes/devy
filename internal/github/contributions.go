@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrMissingUsername = errors.New("missing github username")
+	ErrToDateBeforeFromDate = errors.New("to date is before from date")
 )
 
 type Day struct {
@@ -32,12 +33,10 @@ type GetContributionsByUsernameOptions struct {
 }
 
 func (g *GithubService) GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error) {
-	var contributions *Contributions
-
 	if len(options.Username) == 0 {
 		return nil, ErrMissingUsername
 	}
-
+	
 	from, to := options.From, options.To
 
 	if to.IsZero() {
@@ -48,7 +47,11 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 		from = to.AddDate(-1, 0, 0)
 	}
 
-	contributions = &Contributions{
+	if to.Before(from) {
+		return nil, ErrToDateBeforeFromDate
+	}
+
+	contributions := &Contributions{
 		TotalContributions: 			0,
 		Days:               []Day{},
 	}
@@ -106,7 +109,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 				})
 			}
 		}
-		
+
 		to = from.AddDate(0, 0, -1)
 
 		if from.Equal(originalFrom) {
@@ -121,6 +124,33 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 
 	return contributions, nil
 }
+
+func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, username string) (*time.Time, error) {
+	var contributionYears struct {
+		User struct {
+			ContributionsCollection struct {
+				ContributionYears []int
+			} 
+		} `graphql:"user(login: $username)"`
+	}
+
+	err := g.githubClient.Query(ctx, &contributionYears, map[string]interface{}{
+		"username": githubv4.String(username),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "github client query")
+	}
+
+	years := contributionYears.User.ContributionsCollection.ContributionYears
+
+	firstYear := years[len(years) - 1]
+
+	t := time.Date(firstYear, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	return &t, nil
+}
+
+
 
 type CurrentContributionStreak struct {
 	Streak    int
@@ -178,8 +208,13 @@ func (c LongestContributionStreak) String() string {
 }
 
 func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error) {
+	year, err := g.GetFirstContributionYearByUsername(ctx, username)
+	if err != nil {
+		return nil, errors.Wrap(err, "get contributions by username")
+	}
+
 	options := GetContributionsByUsernameOptions{
-		From: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC),
+		From: *year,
 		To: time.Now(),
 		Username: username,
 	}
