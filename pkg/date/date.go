@@ -1,6 +1,8 @@
 package date
 
-import "time"
+import (
+	"time"
+)
 
 // EOD returns the end of the day in the provided timezone
 func EOD(t time.Time, loc *time.Location) time.Time {

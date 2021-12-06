@@ -1,6 +1,7 @@
 package github
 
 import (
+
 	"context"
 	"fmt"
 	"sort"
@@ -8,6 +9,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
+)
+
+var (
+	ErrMissingUsername = errors.New("missing github username")
+	ErrToDateBeforeFromDate = errors.New("to date is before from date")
 )
 
 type Day struct {
@@ -20,53 +26,95 @@ type Contributions struct {
 	Days               []Day
 }
 
-func (g *GithubService) GetContributionsByUsername(ctx context.Context, username string) (*Contributions, error) {
-	var contributionsQuery struct {
-		User struct {
-			ContributionsCollection struct {
-				ContributionCalendar struct {
-					TotalContributions int
-					Weeks              []struct {
-						ContributionDays []struct {
-							ContributionCount int
-							Weekday           int
-							Date              string
-						}
-					}
-				}
-			}
-		} `graphql:"user(login: $username)"`
+type GetContributionsByUsernameOptions struct {
+	Username string
+	From time.Time
+	To time.Time
+}
+
+func (g *GithubService) GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error) {
+	if len(options.Username) == 0 {
+		return nil, ErrMissingUsername
+	}
+	
+	from, to := options.From, options.To
+
+	if to.IsZero() {
+		to = time.Now()
 	}
 
-	err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
-		"username": githubv4.String(username),
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "github client query")
+	if from.IsZero() {
+		from = to.AddDate(-1, 0, 0)
+	}
+
+	if to.Before(from) {
+		return nil, ErrToDateBeforeFromDate
 	}
 
 	contributions := &Contributions{
-		TotalContributions: contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions,
+		TotalContributions: 			0,
 		Days:               []Day{},
 	}
 
-	for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
+	originalFrom := from
 
-		for _, d := range w.ContributionDays {
+	for {
 
-			date, err := time.Parse("2006-01-02", d.Date)
-			if err != nil {
-				return nil, errors.Wrap(err, "parsing date")
-			}
-
-			contributions.Days = append(contributions.Days, Day{
-				ContributionCount: d.ContributionCount,
-				Weekday:           d.Weekday,
-				Date:              date,
-			})
-
+		from = to.AddDate(-1, 0, 0)
+		if from.Before(originalFrom) {
+			from = originalFrom
 		}
 
+		var contributionsQuery struct {
+			User struct {
+				ContributionsCollection struct {
+					ContributionCalendar struct {
+						TotalContributions int
+						Weeks              []struct {
+							ContributionDays []struct {
+								ContributionCount int
+								Weekday           int
+								Date              string
+							}
+						}
+					}
+				} `graphql:"contributionsCollection(from: $from, to: $to)"`
+			} `graphql:"user(login: $username)"`
+		}
+
+		err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
+			"username": githubv4.String(options.Username),
+			"from": githubv4.DateTime{ Time: from },
+			"to": githubv4.DateTime{ Time: to },
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "github client query")
+		}
+	
+		contributions.TotalContributions += contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions
+	
+		for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
+	
+			for _, d := range w.ContributionDays {
+	
+				date, err := time.Parse("2006-01-02", d.Date)
+				if err != nil {
+					return nil, errors.Wrap(err, "parsing date")
+				}
+	
+				contributions.Days = append(contributions.Days, Day{
+					ContributionCount: d.ContributionCount,
+					Weekday:           d.Weekday,
+					Date:              date,
+				})
+			}
+		}
+
+		to = from.AddDate(0, 0, -1)
+
+		if from.Equal(originalFrom) {
+			break
+		}
 	}
 
 	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here
@@ -76,6 +124,33 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, username
 
 	return contributions, nil
 }
+
+func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, username string) (*time.Time, error) {
+	var contributionYears struct {
+		User struct {
+			ContributionsCollection struct {
+				ContributionYears []int
+			} 
+		} `graphql:"user(login: $username)"`
+	}
+
+	err := g.githubClient.Query(ctx, &contributionYears, map[string]interface{}{
+		"username": githubv4.String(username),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "github client query")
+	}
+
+	years := contributionYears.User.ContributionsCollection.ContributionYears
+
+	firstYear := years[len(years) - 1]
+
+	t := time.Date(firstYear, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	return &t, nil
+}
+
+
 
 type CurrentContributionStreak struct {
 	Streak    int
@@ -88,8 +163,12 @@ func (c CurrentContributionStreak) String() string {
 
 func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Context, username string) (*CurrentContributionStreak, error) {
 
+	options := GetContributionsByUsernameOptions{
+		Username: username,
+	}
+
 	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
-	contributions, err := g.GetContributionsByUsername(ctx, username)
+	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
 	}
@@ -129,9 +208,19 @@ func (c LongestContributionStreak) String() string {
 }
 
 func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error) {
+	year, err := g.GetFirstContributionYearByUsername(ctx, username)
+	if err != nil {
+		return nil, errors.Wrap(err, "get first contribution year by username")
+	}
+
+	options := GetContributionsByUsernameOptions{
+		From: *year,
+		To: time.Now(),
+		Username: username,
+	}
 
 	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
-	contributions, err := g.GetContributionsByUsername(ctx, username)
+	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
 	}
