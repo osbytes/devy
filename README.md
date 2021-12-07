@@ -35,7 +35,9 @@ godotenv -f .env go run cmd/bot/main.go
 
 ## How to Test on a Test Bot
 
+## Testing
 
+mockery
 
 ## Ideas
 

@@ -31,6 +31,37 @@ type GetContributionsByUsernameOptions struct {
 	To       time.Time
 }
 
+type contributionsQuery struct {
+	User user `graphql:"user(login: $username)"`
+}
+
+type user struct {
+	ContributionsCollection contributionsCollection `graphql:"contributionsCollection(from: $from, to: $to)"`
+}
+
+type contributionsCollection struct {
+	ContributionCalendar contributionCalendar
+}
+
+type contributionCalendar struct {
+	TotalContributions int
+	Weeks              []week
+}
+
+type week struct {
+	ContributionDays []struct {
+		ContributionCount int
+		Weekday           int ``
+		Date              string
+	}
+}
+
+type contributionDays struct {
+	ContributionCount int
+	Weekday           int ``
+	Date              string
+}
+
 func (g *GithubService) GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error) {
 	if len(options.Username) == 0 {
 		return nil, ErrMissingUsername
@@ -64,24 +95,9 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			from = originalFrom
 		}
 
-		var contributionsQuery struct {
-			User struct {
-				ContributionsCollection struct {
-					ContributionCalendar struct {
-						TotalContributions int
-						Weeks              []struct {
-							ContributionDays []struct {
-								ContributionCount int
-								Weekday           int
-								Date              string
-							}
-						}
-					}
-				} `graphql:"contributionsCollection(from: $from, to: $to)"`
-			} `graphql:"user(login: $username)"`
-		}
+		var cq contributionsQuery
 
-		err := g.githubClient.Query(ctx, &contributionsQuery, map[string]interface{}{
+		err := g.githubClient.Query(ctx, &cq, map[string]interface{}{
 			"username": githubv4.String(options.Username),
 			"from":     githubv4.DateTime{Time: from},
 			"to":       githubv4.DateTime{Time: to},
@@ -90,9 +106,9 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			return nil, errors.Wrap(err, "github client query")
 		}
 
-		contributions.TotalContributions += contributionsQuery.User.ContributionsCollection.ContributionCalendar.TotalContributions
+		contributions.TotalContributions += cq.User.ContributionsCollection.ContributionCalendar.TotalContributions
 
-		for _, w := range contributionsQuery.User.ContributionsCollection.ContributionCalendar.Weeks {
+		for _, w := range cq.User.ContributionsCollection.ContributionCalendar.Weeks {
 
 			for _, d := range w.ContributionDays {
 
@@ -116,7 +132,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 		}
 	}
 
-	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here 
+	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here
 	sort.Slice(contributions.Days, func(i, j int) bool {
 		return contributions.Days[i].Date.After(contributions.Days[j].Date)
 	})
@@ -169,7 +185,7 @@ func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Conte
 		Username: username,
 	}
 
-	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves 
+	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
 	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
@@ -221,7 +237,7 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 		Username: username,
 	}
 
-	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves 
+	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
 	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
