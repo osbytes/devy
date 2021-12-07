@@ -117,7 +117,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 		}
 	}
 
-	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here
+	// TODO: figure out how to sort by date DESC in graphql so we don't have to do it here 
 	sort.Slice(contributions.Days, func(i, j int) bool {
 		return contributions.Days[i].Date.After(contributions.Days[j].Date)
 	})
@@ -167,7 +167,7 @@ func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Conte
 		Username: username,
 	}
 
-	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
+	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves 
 	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
@@ -219,7 +219,7 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 		Username: username,
 	}
 
-	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves
+	// TODO: we could decrease bandwidth by making a custom graphql request here that doesn't retrieve some of the unnecessary fields that this retrieves 
 	contributions, err := g.GetContributionsByUsername(ctx, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
