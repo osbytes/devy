@@ -1,6 +1,10 @@
-# dev-hub-bot
+<div style="text-align: center;">
+<h1 style="border-bottom: none;">Devy</h1>
 
-Discord bot for dev hub discord channel
+<img src="./devy.svg" height="175">
+
+A developer focused discord bot written in go
+</div>
 
 ## Run
 
