@@ -2,7 +2,15 @@
 
 Discord bot for dev hub discord channel
 
-## Run
+## How to Get Started
+
+Install all go dependencies
+
+```sh
+go get ./...
+```
+
+### Run the app
 
 Copy `.env.sample` to `.env` and add secrets
 
@@ -37,6 +45,22 @@ godotenv -f .env go run cmd/bot/main.go
 
 ## Testing
 
+If you are adding a test please make sure to delete any of the todo comment once you push your changes
+
+```go
+// TODO Tests: GetFirstContributionYearByUsername
+// labels: tests
+func TestGetFirstContributionYearByUsername(t *testing.T) {
+
+}
+
+// TODO Tests: GetFirstContributionYearByUsername
+// labels: tests
+func TestGetFirstContributionYearByUsername(t *testing.T) {
+
+}
+```
+
 ### Test Naming
 
 ```go
@@ -50,14 +74,19 @@ func TestGetContributionsByUsername(t *testing.T) {
     // test
 }
 
-// test modifiers have an underscore followed by what you are testing for
+// test modifiers have a single underscore followed by what you are testing for
 func TestGetContributionsByUsername_MultiYear(t *testing.T) {
     // test
 }
 
+// use double underscore for methods on structs
+func TestLongestContributionStreak__String(t *testing.T) {
 
-func TestGetContributionsByUsername_DatesZeroValue(t *testing.T) {
-    // test
+}
+\
+// modifier on a struct method would be followed by a final underscore and what you are testing for
+func TestLongestContributionStreak__String_NoStreak(t *testing.T) {
+
 }
 
 ```

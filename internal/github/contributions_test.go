@@ -169,11 +169,14 @@ func TestGetContributionsByUsername_MultiYear(t *testing.T) {
 
 	resp, err := githubService.GetContributionsByUsername(ctx, options)
 
+	fmt.Println(resp.TotalContributions)
+
 	assert.NoError(err)
 
 	assert.Equal(5, resp.Days[0].ContributionCount)
 	assert.Equal(1, resp.Days[0].Weekday)
 	assert.Equal(time.Date(2019, 01, 01, 0, 0, 0, 0, time.UTC), resp.Days[0].Date)
+	assert.Equal(200, resp.TotalContributions)
 
 	githubClient.AssertExpectations(t)
 }
@@ -194,6 +197,8 @@ func TestGetContributionsByUsername_DatesZeroValue(t *testing.T) {
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
+			assert.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond)
+			assert.WithinDuration(time.Now().AddDate(-1, 0, 0), params["from"].(githubv4.DateTime).Time, time.Millisecond)
 			return githubv4.String(options.Username) == params["username"]
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
@@ -245,66 +250,51 @@ func TestGetContributionsByUsername_DatesZeroValue(t *testing.T) {
 }
 
 // TODO Tests: error table test on GetContributionsByUsername
-// labels: tests
+// labels: tests, good first issue
 // Need to run a table test on GetContributionsByUsername to hit
 // ErrMissingUsername and ErrToDateBeforeFromDate
 func TestGetContributionsByUsername_Errors(t *testing.T) {
-	assert := assert.New(t)
-	assert.Equal(3, 3)
+
 }
 
 // TODO Tests: GetFirstContributionYearByUsername
-// labels: tests
+// labels: tests, good first issue
 func TestGetFirstContributionYearByUsername(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: CurrentContributionStreak.String()
 // labels: tests
 func TestCurrentContributionStreak_String(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: GetCurrentContributionStreakByUsername
 // labels: tests
 func TestGetCurrentContributionStreakByUsername(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: LongestContributionStreak.String()
-// labels: tests
+// labels: tests, good first issue
 func TestLongestContributionStreak_String(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: GetLongestContributionStreakByUsername
 // labels: tests
 func TestGetLongestContributionStreakByUsername(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: TotalContribution.String()
-// labels: tests
+// labels: tests, good first issue
 func TestTotalContribution_String(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }
 
 // TODO Tests: GetTotalContributionsByUsername
-// labels: tests
+// labels: tests, good first issue
 func TestGetTotalContributionsByUsername(t *testing.T) {
-	assert := assert.New(t)
 
-	fmt.Println(assert)
 }

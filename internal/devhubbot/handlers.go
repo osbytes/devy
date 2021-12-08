@@ -33,7 +33,7 @@ func (b *Bot) messageCreate(session *discordgo.Session, message *discordgo.Messa
 	}
 
 	// Find the channel that the message came from.
-	channel, err := channelFromState(session.State, message.ChannelID)
+	channel, err := channelFromStateF(session.State, message.ChannelID)
 	if err != nil {
 		// Could not find channel.
 		return
