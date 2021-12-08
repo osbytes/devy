@@ -64,7 +64,13 @@ var commandMap = map[string]Command{
 		Name:        "!contributionstotal",
 		Description: "get the all time total contribution of a github user",
 		Args:        []string{"github username"},
-		Handler:     contributionTotalCommandHandler,
+		Handler:     contributionsTotalCommandHandler,
+	},
+	"!languages": {
+		Name:        "!languages",
+		Description: "get a breakdown (in bytes written per language) of all languages used committed to your repositories",
+		Args:        []string{"github username"},
+		Handler:     languagesCommandHandler,
 	},
 }
 
@@ -118,7 +124,7 @@ func streakLongestCommandHandler(session *discordgo.Session, message *discordgo.
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, longestStreak.String()))
 }
 
-func contributionTotalCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+func contributionsTotalCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -141,4 +147,29 @@ func contributionTotalCommandHandler(session *discordgo.Session, message *discor
 	}
 
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
+}
+
+func languagesCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
+	if len(contentParts) <= 1 {
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
+
+		return
+	}
+
+	username := contentParts[1]
+
+	languages, err := bot.githubService.GetLanguagesByUsername(ctx, username)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("github service get languages by username")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving languages for user %s", username))
+
+		return
+	}
+
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, languages.String()))
 }
