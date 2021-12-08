@@ -53,7 +53,7 @@ func (g *GithubService) GetLanguagesByUsername(ctx context.Context, username str
 									Name  string
 								}
 							}
-						} `graphql:"languages(first: 100, orderBy: {field: SIZE, direction: DESC})"`
+						} `graphql:"languages(first: 100, orderBy: {field: SIZE, direction: DESC})"` // If someone is using over 100 different languages in a repo, the results will be incorrect. I'm okay with this because you might be a monster if you have over 100 languages in a single repo.
 					}
 				} `graphql:"repositories(ownerAffiliations: OWNER, isFork: false, after: $after, first: 100)"`
 			} `graphql:"user(login: $username)"`
