@@ -35,7 +35,7 @@ func (g *GithubService) GetLanguagesByUsername(ctx context.Context, username str
 
 	for {
 
-		var query struct {
+		var languagesQuery struct {
 			User struct {
 				Repositories struct {
 					PageInfo struct {
@@ -69,12 +69,12 @@ func (g *GithubService) GetLanguagesByUsername(ctx context.Context, username str
 			params["after"] = githubv4.String(afterCursor)
 		}
 
-		err := g.githubClient.Query(ctx, &query, params)
+		err := g.githubClient.Query(ctx, &languagesQuery, params)
 		if err != nil {
 			return nil, errors.Wrap(err, "github client query")
 		}
 
-		for _, repository := range query.User.Repositories.Nodes {
+		for _, repository := range languagesQuery.User.Repositories.Nodes {
 
 			for _, lang := range repository.Languages.Edges {
 
@@ -91,11 +91,11 @@ func (g *GithubService) GetLanguagesByUsername(ctx context.Context, username str
 
 		}
 
-		if !query.User.Repositories.PageInfo.HasNextPage {
+		if !languagesQuery.User.Repositories.PageInfo.HasNextPage {
 			break
 		}
 
-		afterCursor = query.User.Repositories.PageInfo.EndCursor
+		afterCursor = languagesQuery.User.Repositories.PageInfo.EndCursor
 
 	}
 
