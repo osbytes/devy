@@ -15,6 +15,7 @@ type GithubServicer interface {
 	GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error)
 	GetFirstContributionYearByUsername(ctx context.Context, username string) (*time.Time, error)
 	GetTotalContributionsByUsername(ctx context.Context, username string) (*TotalContribution, error)
+	GetLanguagesByUsername(ctx context.Context, username string) (Languages, error)
 }
 
 type GithubService struct {
