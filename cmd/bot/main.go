@@ -3,14 +3,11 @@ package main
 import (
 	"bot/internal/devhubbot"
 	"bot/internal/github"
-	"bot/internal/quotes"
 	"bot/pkg/colors"
 	"bot/pkg/env"
 	"bot/pkg/infra"
-	"bot/pkg/universalinspirationalquotes"
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -46,15 +43,6 @@ func main() {
 		infra.Logger.Fatal().Err(err).Msg("discordgo new")
 	}
 
-	var quoteService quotes.QuoteServicer = &quotes.NOOPQuoteService{}
-
-	rapidAPIKeyUniversalInspirationalQuotes := env.GetString("RAPID_API_KEY_UNIVERSAL_INSPIRATIONAL_QUOTES", "")
-	if len(rapidAPIKeyUniversalInspirationalQuotes) > 0 {
-		quotesClient := universalinspirationalquotes.NewHTTPClient(&http.Client{}, rapidAPIKeyUniversalInspirationalQuotes)
-
-		quoteService = quotes.NewQuoteService(quotesClient)
-	}
-
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: env.GetString("GITHUB_TOKEN", "")},
 	)
@@ -64,7 +52,7 @@ func main() {
 
 	githubService := github.NewGithubService(client)
 
-	bot := devhubbot.NewBot(discord, quoteService, githubService)
+	bot := devhubbot.NewBot(discord, githubService)
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")
