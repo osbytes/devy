@@ -3,9 +3,11 @@ package github
 import (
 	"context"
 	"time"
-
-	"github.com/shurcooL/githubv4"
 )
+
+type GithubClient interface {
+	Query(ctx context.Context, q interface{}, variables map[string]interface{}) error
+}
 
 type GithubServicer interface {
 	GetContributionsByUsername(ctx context.Context, options GetContributionsByUsernameOptions) (*Contributions, error)
@@ -16,12 +18,12 @@ type GithubServicer interface {
 }
 
 type GithubService struct {
-	githubClient *githubv4.Client
+	githubClient GithubClient
 }
 
 var _ GithubServicer = (*GithubService)(nil)
 
-func NewGithubService(githubClient *githubv4.Client) *GithubService {
+func NewGithubService(githubClient GithubClient) *GithubService {
 	return &GithubService{
 		githubClient: githubClient,
 	}

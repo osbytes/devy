@@ -10,11 +10,16 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var channelFromState = func(s *discordgo.State, channelID string) (*discordgo.Channel, error) {
+var (
+	channelFromStateF   = channelFromState
+	channelMessageSendF = channelMessageSend
+)
+
+func channelFromState(s *discordgo.State, channelID string) (*discordgo.Channel, error) {
 	return s.Channel(channelID)
 }
 
-var channelMessageSend = func(s *discordgo.Session, channelID, message string) (*discordgo.Message, error) {
+func channelMessageSend(s *discordgo.Session, channelID, message string) (*discordgo.Message, error) {
 	return s.ChannelMessageSend(channelID, message)
 }
 
@@ -69,7 +74,7 @@ func streakCurrentCommandHandler(session *discordgo.Session, message *discordgo.
 
 	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
 	if len(contentParts) <= 1 {
-		_, _ = channelMessageSend(session, channel.ID, "missing github username")
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
 
 		return
 	}
@@ -80,12 +85,12 @@ func streakCurrentCommandHandler(session *discordgo.Session, message *discordgo.
 	if err != nil {
 		infra.Logger.Error().Err(err).Msg("github service get current contribution streak by username")
 
-		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving current streak for github user %s", username))
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving current streak for github user %s", username))
 
 		return
 	}
 
-	_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("user %s %s", username, currentStreak.String()))
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, currentStreak.String()))
 }
 
 func streakLongestCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
@@ -94,7 +99,7 @@ func streakLongestCommandHandler(session *discordgo.Session, message *discordgo.
 
 	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
 	if len(contentParts) <= 1 {
-		_, _ = channelMessageSend(session, channel.ID, "missing github username")
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
 
 		return
 	}
@@ -105,12 +110,12 @@ func streakLongestCommandHandler(session *discordgo.Session, message *discordgo.
 	if err != nil {
 		infra.Logger.Error().Err(err).Msg("github service get longest contribution streak by username")
 
-		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving longest streak for github user %s", username))
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving longest streak for github user %s", username))
 
 		return
 	}
 
-	_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("user %s %s", username, longestStreak.String()))
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, longestStreak.String()))
 }
 
 func contributionTotalCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
@@ -119,7 +124,7 @@ func contributionTotalCommandHandler(session *discordgo.Session, message *discor
 
 	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
 	if len(contentParts) <= 1 {
-		_, _ = channelMessageSend(session, channel.ID, "missing github username")
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
 
 		return
 	}
@@ -130,10 +135,10 @@ func contributionTotalCommandHandler(session *discordgo.Session, message *discor
 	if err != nil {
 		infra.Logger.Error().Err(err).Msg("github service get total contributions by username")
 
-		_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("something went wrong retrieving total contributions for user %s", username))
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving total contributions for user %s", username))
 
 		return
 	}
 
-	_, _ = channelMessageSend(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
 }
