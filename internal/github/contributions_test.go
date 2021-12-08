@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestGetContributionsByUsername(t *testing.T) {
+func TestGithubService_GetContributionsByUsername(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
 	githubService := NewGithubService(githubClient)
@@ -84,7 +84,7 @@ func TestGetContributionsByUsername(t *testing.T) {
 	githubClient.AssertExpectations(t)
 }
 
-func TestGetContributionsByUsername_MultiYear(t *testing.T) {
+func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
 	githubService := NewGithubService(githubClient)
@@ -181,7 +181,7 @@ func TestGetContributionsByUsername_MultiYear(t *testing.T) {
 	githubClient.AssertExpectations(t)
 }
 
-func TestGetContributionsByUsername_DatesZeroValue(t *testing.T) {
+func TestGithubService_GetContributionsByUsername__DatesZeroValue(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
 	githubService := NewGithubService(githubClient)
@@ -253,13 +253,13 @@ func TestGetContributionsByUsername_DatesZeroValue(t *testing.T) {
 // labels: tests, good first issue
 // Need to run a table test on GetContributionsByUsername to hit
 // ErrMissingUsername and ErrToDateBeforeFromDate
-func TestGetContributionsByUsername_Errors(t *testing.T) {
+func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
 
 }
 
 // TODO Tests: GetFirstContributionYearByUsername
 // labels: tests, good first issue
-func TestGetFirstContributionYearByUsername(t *testing.T) {
+func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
 
 }
 
@@ -269,9 +269,15 @@ func TestCurrentContributionStreak_String(t *testing.T) {
 
 }
 
+// TODO Tests: CurrentContributionStreak.String() no streak
+// labels: tests
+func TestCurrentContributionStreak_String__NoStreak(t *testing.T) {
+
+}
+
 // TODO Tests: GetCurrentContributionStreakByUsername
 // labels: tests
-func TestGetCurrentContributionStreakByUsername(t *testing.T) {
+func TestGithubService_GetCurrentContributionStreakByUsername(t *testing.T) {
 
 }
 
@@ -283,7 +289,7 @@ func TestLongestContributionStreak_String(t *testing.T) {
 
 // TODO Tests: GetLongestContributionStreakByUsername
 // labels: tests
-func TestGetLongestContributionStreakByUsername(t *testing.T) {
+func TestGithubService_GetLongestContributionStreakByUsername(t *testing.T) {
 
 }
 
@@ -295,6 +301,6 @@ func TestTotalContribution_String(t *testing.T) {
 
 // TODO Tests: GetTotalContributionsByUsername
 // labels: tests, good first issue
-func TestGetTotalContributionsByUsername(t *testing.T) {
+func TestGithubService_GetTotalContributionsByUsername(t *testing.T) {
 
 }

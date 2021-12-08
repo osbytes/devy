@@ -77,28 +77,19 @@ func TestGetFirstContributionYearByUsername(t *testing.T) {
 
 ```go
 // function to test
-func GetContributionsByUsername() {
+func (g *GithubService) GetContributionsByUsername() {
     // logic
 }
 
 // notice the naming for the main test for GetContributionsByUsername
-func TestGetContributionsByUsername(t *testing.T) {
+// the struct followed but a single underscore and the receiver method name
+func TestGithubService_GetContributionsByUsername(t *testing.T) {
     // test
 }
 
-// test modifiers have a single underscore followed by what you are testing for
-func TestGetContributionsByUsername_MultiYear(t *testing.T) {
+// test modifiers are separated by a double underscore followed by what you are testing for
+func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
     // test
-}
-
-// use double underscore for methods on structs
-func TestLongestContributionStreak__String(t *testing.T) {
-
-}
-\
-// modifier on a struct method would be followed by a final underscore and what you are testing for
-func TestLongestContributionStreak__String_NoStreak(t *testing.T) {
-
 }
 
 ```
