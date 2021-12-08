@@ -14,6 +14,14 @@ Install all go dependencies
 go get ./...
 ```
 
+Make sure you install mockery!!
+
+Open a terminal window and run this
+
+```sh
+go get github.com/vektra/mockery/v2/.../
+```
+
 ### Run the app
 
 Copy `.env.sample` to `.env` and add secrets
