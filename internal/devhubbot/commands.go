@@ -171,5 +171,5 @@ func languagesCommandHandler(session *discordgo.Session, message *discordgo.Mess
 		return
 	}
 
-	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, languages.String()))
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s\n\n%s", username, languages.String()))
 }
