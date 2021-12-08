@@ -2,7 +2,6 @@ package devhubbot
 
 import (
 	"bot/internal/github"
-	"bot/internal/quotes"
 	"context"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,14 +10,12 @@ import (
 
 type Bot struct {
 	discord       *discordgo.Session
-	quoteService  quotes.QuoteServicer
 	githubService github.GithubServicer
 }
 
-func NewBot(discord *discordgo.Session, quoteService quotes.QuoteServicer, githubService github.GithubServicer) *Bot {
+func NewBot(discord *discordgo.Session, githubService github.GithubServicer) *Bot {
 	return &Bot{
 		discord:       discord,
-		quoteService:  quoteService,
 		githubService: githubService,
 	}
 }
