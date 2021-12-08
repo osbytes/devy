@@ -17,7 +17,6 @@ type GithubServicer interface {
 	GetTotalContributionsByUsername(ctx context.Context, username string) (*TotalContribution, error)
 }
 
-// TODO Move github client to interface
 type GithubService struct {
 	githubClient GithubClient
 }

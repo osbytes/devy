@@ -49,16 +49,12 @@ type contributionCalendar struct {
 }
 
 type week struct {
-	ContributionDays []struct {
-		ContributionCount int
-		Weekday           int ``
-		Date              string
-	}
+	ContributionDays []contributionDays
 }
 
 type contributionDays struct {
 	ContributionCount int
-	Weekday           int ``
+	Weekday           int
 	Date              string
 }
 
@@ -125,6 +121,7 @@ func (g *GithubService) GetContributionsByUsername(ctx context.Context, options 
 			}
 		}
 
+		// offset to date by one day because github's graphql api returns inclusive days between the from and to
 		to = from.AddDate(0, 0, -1)
 
 		if from.Equal(originalFrom) {
