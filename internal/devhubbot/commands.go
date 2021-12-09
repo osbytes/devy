@@ -72,6 +72,12 @@ var commandMap = map[string]Command{
 		Args:        []string{"github username"},
 		Handler:     languagesCommandHandler,
 	},
+	"!lastrepo": {
+		Name:        "!lastrepo",
+		Description: "Get the latest repo the user has updated",
+		Args:        []string{"github username"},
+		Handler:     lastRepoCommandHandler,
+	},
 }
 
 func streakCurrentCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
@@ -172,4 +178,29 @@ func languagesCommandHandler(session *discordgo.Session, message *discordgo.Mess
 	}
 
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s\n\n%s", username, languages.String()))
+}
+
+func lastRepoCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
+	if len(contentParts) <= 1 {
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
+
+		return
+	}
+
+	username := contentParts[1]
+
+	lastRepo, err := bot.githubService.GetLastRepoByUsername(ctx, username)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("github service get the last repo updated by username")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving repo for github user %s", username))
+
+		return
+	}
+
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, lastRepo.String()))
 }
