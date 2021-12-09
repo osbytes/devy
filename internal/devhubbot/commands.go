@@ -72,8 +72,8 @@ var commandMap = map[string]Command{
 		Args:        []string{"github username"},
 		Handler:     languagesCommandHandler,
 	},
-	"!lastrepo": {
-		Name:        "!lastrepo",
+	"!lastupdatedrepo": {
+		Name:        "!lastupdatedrepo",
 		Description: "Get the latest repo the user has updated",
 		Args:        []string{"github username"},
 		Handler:     lastRepoCommandHandler,
