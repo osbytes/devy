@@ -25,7 +25,7 @@ func (c LastRepo) String() string {
 	return msg
 }
 
-func (g *GithubService) GetLastRepoByUsername(ctx context.Context, username string) (*LastRepo, error) {
+func (g *GithubService) GetLastUpdatedRepoByUsername(ctx context.Context, username string) (*LastRepo, error) {
 
 	options := GetContributionsByUsernameOptions{
 		Username: username,

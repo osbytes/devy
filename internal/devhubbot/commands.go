@@ -193,11 +193,11 @@ func lastRepoCommandHandler(session *discordgo.Session, message *discordgo.Messa
 
 	username := contentParts[1]
 
-	lastRepo, err := bot.githubService.GetLastRepoByUsername(ctx, username)
+	lastRepo, err := bot.githubService.GetLastUpdatedRepoByUsername(ctx, username)
 	if err != nil {
 		infra.Logger.Error().Err(err).Msg("github service get the last repo updated by username")
 
-		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving repo for github user %s", username))
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving last updated repo for github user %s", username))
 
 		return
 	}
