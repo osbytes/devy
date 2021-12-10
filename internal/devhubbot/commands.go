@@ -1,6 +1,7 @@
 package devhubbot
 
 import (
+	"bot/pkg/env"
 	"bot/pkg/infra"
 	"context"
 	"fmt"
@@ -11,8 +12,12 @@ import (
 )
 
 var (
-	channelFromStateF   = channelFromState
-	channelMessageSendF = channelMessageSend
+	channelFromStateF      = channelFromState
+	channelMessageSendF    = channelMessageSend
+	guildFromStateF        = guildFromState
+	memberFromStateF       = memberFromState
+	guildMemberRoleRemoveF = guildMemberRoleRemove
+	guildMemberRoleAddF    = guildMemberRoleAdd
 )
 
 func channelFromState(s *discordgo.State, channelID string) (*discordgo.Channel, error) {
@@ -21,6 +26,22 @@ func channelFromState(s *discordgo.State, channelID string) (*discordgo.Channel,
 
 func channelMessageSend(s *discordgo.Session, channelID, message string) (*discordgo.Message, error) {
 	return s.ChannelMessageSend(channelID, message)
+}
+
+func guildFromState(s *discordgo.State, guildID string) (*discordgo.Guild, error) {
+	return s.Guild(guildID)
+}
+
+func memberFromState(s *discordgo.State, guildID, userID string) (*discordgo.Member, error) {
+	return s.Member(guildID, userID)
+}
+
+func guildMemberRoleAdd(s *discordgo.Session, guildID, userID, roleID string) error {
+	return s.GuildMemberRoleAdd(guildID, userID, roleID)
+}
+
+func guildMemberRoleRemove(s *discordgo.Session, guildID, userID, roleID string) error {
+	return s.GuildMemberRoleRemove(guildID, userID, roleID)
 }
 
 type CommandHandler func(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot)
@@ -71,6 +92,12 @@ var commandMap = map[string]Command{
 		Description: "get a breakdown (in bytes written per language) of all languages used committed to your repositories",
 		Args:        []string{"github username"},
 		Handler:     languagesCommandHandler,
+	},
+	"!devydeveloper": {
+		Name:        "!devydeveloper",
+		Description: "toggle devy developer role to add/remove access to devy development channels",
+		Args:        []string{},
+		Handler:     devyDeveloperCommandHandler,
 	},
 }
 
@@ -147,6 +174,69 @@ func contributionsTotalCommandHandler(session *discordgo.Session, message *disco
 	}
 
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
+}
+
+func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	guild, err := guildFromStateF(session.State, message.GuildID)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("guild from message.GuildID")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
+
+		return
+	}
+
+	devyDeveloperRoleID := env.GetString("DISCORD_DEVY_DEVELOPER_ROLE_ID", "")
+	if len(devyDeveloperRoleID) == 0 {
+		infra.Logger.Error().Msg("DISCORD_DEVY_DEVELOPER_ROLE_ID env not set")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
+
+		return
+	}
+
+	member, err := memberFromStateF(session.State, guild.ID, message.Author.ID)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("member from state")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
+
+		return
+	}
+
+	currentlyHasRole := false
+	for _, roleID := range member.Roles {
+		if roleID == devyDeveloperRoleID {
+			currentlyHasRole = true
+		}
+	}
+
+	var action string
+	if currentlyHasRole {
+		err = guildMemberRoleRemoveF(session, guild.ID, message.Author.ID, devyDeveloperRoleID)
+		if err != nil {
+			infra.Logger.Error().Err(err).Msg("guild member role remove")
+
+			_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
+
+			return
+		}
+
+		action = "removed"
+	} else {
+		err = guildMemberRoleAddF(session, guild.ID, message.Author.ID, devyDeveloperRoleID)
+		if err != nil {
+			infra.Logger.Error().Err(err).Msg("guild member role add")
+
+			_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
+
+			return
+		}
+
+		action = "added"
+	}
+
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("%s devy developer role for user %s", action, message.Author.Username))
 }
 
 func languagesCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
