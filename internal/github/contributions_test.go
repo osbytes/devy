@@ -291,8 +291,8 @@ func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
 	resp, err := githubService.GetFirstContributionYearByUsername(ctx, username)
 
 	assert.NoError(err)
+	assert.Equal(time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), *resp)
 	githubClient.AssertExpectations(t)
-	assert.Equal(time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), resp)
 }
 
 // TODO Tests: CurrentContributionStreak.String()
