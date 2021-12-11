@@ -225,8 +225,7 @@ type LongestContributionStreak struct {
 }
 
 func (c LongestContributionStreak) String() string {
-	emptyTime := time.Time{}
-	if c.EndedAt == emptyTime {
+	if c.EndedAt.IsZero() {
 		return fmt.Sprintf("longest and current contribution streak: %d days started at: %s", c.Streak, c.StartedAt.Format("2006-01-02"))
 	}
 	return fmt.Sprintf("longest contribution streak: %d days started at: %s ended at: %s", c.Streak, c.StartedAt.Format("2006-01-02"), c.EndedAt.Format("2006-01-02"))
@@ -252,8 +251,6 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 	if err != nil {
 		return nil, errors.Wrap(err, "get contributions by username")
 	}
-
-	fmt.Println(contributions.Days)
 
 	longestContributionStreak := &LongestContributionStreak{Streak: 0}
 
@@ -295,8 +292,6 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 	if longestContributionStreak.EndedAt == now {
 		longestContributionStreak.EndedAt = time.Time{}
 	}
-
-	fmt.Println(longestContributionStreak.EndedAt)
 
 	return longestContributionStreak, nil
 }

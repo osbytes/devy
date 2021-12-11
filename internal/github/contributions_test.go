@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -99,8 +98,6 @@ func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 		To:       to,
 	}
 
-	fmt.Println("check here", from)
-
 	githubClient.On(
 		"Query",
 		ctx,
@@ -169,10 +166,7 @@ func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 
 	resp, err := githubService.GetContributionsByUsername(ctx, options)
 
-	fmt.Println(resp.TotalContributions)
-
 	assert.NoError(err)
-
 	assert.Equal(5, resp.Days[0].ContributionCount)
 	assert.Equal(1, resp.Days[0].Weekday)
 	assert.Equal(time.Date(2019, 01, 01, 0, 0, 0, 0, time.UTC), resp.Days[0].Date)
@@ -428,8 +422,7 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoEndDateCurrentS
 		ctx,
 		mock.AnythingOfType("*github.contributionYears"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.Equal(githubv4.String(username), params["username"])
-			return true
+			return githubv4.String(username) == params["username"]
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionYears)
@@ -490,8 +483,6 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoEndDateCurrentS
 	}).Once()
 
 	resp, err := githubService.GetLongestContributionStreakByUsername(ctx, username)
-
-	fmt.Println(resp, err)
 
 	assert.NoError(err)
 	assert.Equal(time.Time{}, resp.EndedAt)
