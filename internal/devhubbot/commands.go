@@ -93,6 +93,12 @@ var commandMap = map[string]Command{
 		Args:        []string{"github username"},
 		Handler:     languagesCommandHandler,
 	},
+	"!lastupdatedrepo": {
+		Name:        "!lastupdatedrepo",
+		Description: "Get the latest repo the user has updated",
+		Args:        []string{"github username"},
+		Handler:     lastUpdatedRepoCommandHandler,
+  },
 	"!devydeveloper": {
 		Name:        "!devydeveloper",
 		Description: "toggle devy developer role to add/remove access to devy development channels",
@@ -176,6 +182,56 @@ func contributionsTotalCommandHandler(session *discordgo.Session, message *disco
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, totalContributions.String()))
 }
 
+func languagesCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
+	if len(contentParts) <= 1 {
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
+
+		return
+	}
+
+	username := contentParts[1]
+
+	languages, err := bot.githubService.GetLanguagesByUsername(ctx, username)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("github service get languages by username")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving languages for user %s", username))
+
+		return
+	}
+
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s\n\n%s", username, languages.String()))
+}
+
+func lastUpdatedRepoCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
+	if len(contentParts) <= 1 {
+		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
+
+		return
+	}
+
+	username := contentParts[1]
+
+	lastRepo, err := bot.githubService.GetLastUpdatedRepoByUsername(ctx, username)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("github service get the last repo updated by username")
+
+		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving last updated repo for github user %s", username))
+
+		return
+	}
+
+	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s %s", username, lastRepo.String()))
+}
+
 func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
 	guild, err := guildFromStateF(session.State, message.GuildID)
 	if err != nil {
@@ -237,29 +293,4 @@ func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.
 	}
 
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("%s devy developer role for user %s", action, message.Author.Username))
-}
-
-func languagesCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	contentParts := strings.Split(strings.TrimSpace(message.Content), " ")
-	if len(contentParts) <= 1 {
-		_, _ = channelMessageSendF(session, channel.ID, "missing github username")
-
-		return
-	}
-
-	username := contentParts[1]
-
-	languages, err := bot.githubService.GetLanguagesByUsername(ctx, username)
-	if err != nil {
-		infra.Logger.Error().Err(err).Msg("github service get languages by username")
-
-		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong retrieving languages for user %s", username))
-
-		return
-	}
-
-	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("user %s\n\n%s", username, languages.String()))
 }
