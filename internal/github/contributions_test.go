@@ -290,6 +290,84 @@ func TestLongestContributionStreak_String(t *testing.T) {
 // TODO Tests: GetLongestContributionStreakByUsername
 // labels: tests
 func TestGithubService_GetLongestContributionStreakByUsername(t *testing.T) {
+	// assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
+	test := &MockGithubServicer{}
+
+	ctx := context.Background()
+
+	test.On("GetFirstContributionYearByUsername",
+		mock.AnythingOfType("context.Context"),
+		mock.AnythingOfType("string"),
+	).Return("hello", nil)
+
+	// githubClient.On(
+	// 	"Query",
+	// 	ctx,
+	// 	mock.AnythingOfType("*github.contributionsQuery"),
+	// 	mock.MatchedBy(func(params map[string]interface{}) bool {
+	// 		assert.Equal(githubv4.String(options.Username), params["username"])
+	// 		assert.Equal(githubv4.DateTime{Time: from}, params["from"])
+	// 		assert.Equal(githubv4.DateTime{Time: to}, params["to"])
+	// 		return true
+	// 	}),
+	// ).Return(nil).Run(func(args mock.Arguments) {
+	// 	a := args.Get(1).(*contributionsQuery)
+	// 	(*a) = contributionsQuery{
+	// 		User: user{
+	// 			ContributionsCollection: contributionsCollection{
+	// 				ContributionCalendar: contributionCalendar{
+	// 					TotalContributions: 100,
+	// 					Weeks: []week{
+	// 						{
+	// 							[]contributionDays{
+	// 								{
+	// 									ContributionCount: 5,
+	// 									Weekday:           7,
+	// 									Date:              "2019-06-10",
+	// 								},
+	// 								{
+	// 									ContributionCount: 5,
+	// 									Weekday:           6,
+	// 									Date:              "2019-06-09",
+	// 								},
+	// 								{
+	// 									ContributionCount: 5,
+	// 									Weekday:           4,
+	// 									Date:              "2019-06-08",
+	// 								},
+	// 								{
+	// 									ContributionCount: 5,
+	// 									Weekday:           3,
+	// 									Date:              "2019-05-07",
+	// 								},
+	// 							},
+	// 						},
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	}
+	// }).Once()\
+
+	fmt.Println("hellooo??")
+
+	resp, err := githubService.GetLongestContributionStreakByUsername(ctx, "devy")
+
+	fmt.Println("print", resp, err)
+
+	// assert.NoError(err)
+
+	// assert.Equal(10, resp.Days[0].ContributionCount)
+	// assert.Equal(0, resp.Days[0].Weekday)
+	// assert.Equal(time.Date(2019, 01, 02, 0, 0, 0, 0, time.UTC), resp.Days[0].Date)
+
+	// assert.Equal(5, resp.Days[1].ContributionCount)
+	// assert.Equal(1, resp.Days[1].Weekday)
+	// assert.Equal(time.Date(2019, 01, 01, 0, 0, 0, 0, time.UTC), resp.Days[1].Date)
+
+	// githubClient.AssertExpectations(t)
 
 }
 

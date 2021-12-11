@@ -224,7 +224,10 @@ func (c LongestContributionStreak) String() string {
 
 func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error) {
 	year, err := g.GetFirstContributionYearByUsername(ctx, username)
+
+	fmt.Println(year)
 	if err != nil {
+		fmt.Println("error")
 		return nil, errors.Wrap(err, "get first contribution year by username")
 	}
 
