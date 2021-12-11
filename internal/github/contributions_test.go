@@ -505,8 +505,7 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoContributionDay
 		ctx,
 		mock.AnythingOfType("*github.contributionYears"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.Equal(githubv4.String(username), params["username"])
-			return true
+			return githubv4.String(username) == params["username"]
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionYears)
