@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -99,8 +98,6 @@ func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 		To:       to,
 	}
 
-	fmt.Println("check here", from)
-
 	githubClient.On(
 		"Query",
 		ctx,
@@ -169,10 +166,7 @@ func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 
 	resp, err := githubService.GetContributionsByUsername(ctx, options)
 
-	fmt.Println(resp.TotalContributions)
-
 	assert.NoError(err)
-
 	assert.Equal(5, resp.Days[0].ContributionCount)
 	assert.Equal(1, resp.Days[0].Weekday)
 	assert.Equal(time.Date(2019, 01, 01, 0, 0, 0, 0, time.UTC), resp.Days[0].Date)
@@ -260,7 +254,39 @@ func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
 // TODO Tests: GetFirstContributionYearByUsername
 // labels: tests, good first issue
 func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
 
+	ctx := context.Background()
+
+	username := "devy"
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionYears"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionYears)
+		(*a) = contributionYears{
+			User: userContributionYears{
+				ContributionsCollection: contributionsCollectionContributionYears{
+					ContributionYears: []int{
+						2019,
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetFirstContributionYearByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), *resp)
+	githubClient.AssertExpectations(t)
 }
 
 // TODO Tests: CurrentContributionStreak.String()
@@ -287,10 +313,247 @@ func TestLongestContributionStreak_String(t *testing.T) {
 
 }
 
-// TODO Tests: GetLongestContributionStreakByUsername
-// labels: tests
 func TestGithubService_GetLongestContributionStreakByUsername(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
 
+	ctx := context.Background()
+
+	username := "devy"
+	year := time.Now()
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionYears"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionYears)
+		(*a) = contributionYears{
+			User: userContributionYears{
+				ContributionsCollection: contributionsCollectionContributionYears{
+					ContributionYears: []int{
+						year.Year(),
+					},
+				},
+			},
+		}
+	}).Once()
+
+	from := time.Date(year.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionsQuery"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
+			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionsQuery)
+		(*a) = contributionsQuery{
+			User: user{
+				ContributionsCollection: contributionsCollection{
+					ContributionCalendar: contributionCalendar{
+						TotalContributions: 100,
+						Weeks: []week{
+							{
+								[]contributionDays{
+									{
+										ContributionCount: 0,
+										Weekday:           7,
+										Date:              time.Date(time.Now().Year(), 7, 10, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 5,
+										Weekday:           7,
+										Date:              time.Date(time.Now().Year(), 7, 10, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 5,
+										Weekday:           6,
+										Date:              time.Date(time.Now().Year(), 7, 9, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 0,
+										Weekday:           5,
+										Date:              time.Date(time.Now().Year(), 7, 8, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetLongestContributionStreakByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(time.Date(time.Now().Year(), 7, 10, 0, 0, 0, 0, time.UTC), resp.EndedAt)
+	assert.Equal(time.Date(time.Now().Year(), 7, 9, 0, 0, 0, 0, time.UTC), resp.StartedAt)
+	assert.Equal(2, resp.Streak)
+
+	// TODO Tests: githubClient.AssertExpectations failing
+	//panic: interface conversion: interface {} is nil, not githubv4.DateTime [recovered]
+	//panic: interface conversion: interface {} is nil, not githubv4.DateTime
+	// githubClient.AssertExpectations(t)
+}
+
+func TestGithubService_GetLongestContributionStreakByUsername__NoEndDateCurrentStreak(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
+
+	ctx := context.Background()
+
+	username := "devy"
+	year := time.Now()
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionYears"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionYears)
+		(*a) = contributionYears{
+			User: userContributionYears{
+				ContributionsCollection: contributionsCollectionContributionYears{
+					ContributionYears: []int{
+						year.Year(),
+					},
+				},
+			},
+		}
+	}).Once()
+
+	from := time.Date(year.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionsQuery"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
+			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionsQuery)
+		(*a) = contributionsQuery{
+			User: user{
+				ContributionsCollection: contributionsCollection{
+					ContributionCalendar: contributionCalendar{
+						TotalContributions: 100,
+						Weeks: []week{
+							{
+								[]contributionDays{
+									{
+										ContributionCount: 5,
+										Weekday:           7,
+										Date:              time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 5,
+										Weekday:           6,
+										Date:              time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 0,
+										Weekday:           5,
+										Date:              time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-2, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetLongestContributionStreakByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(time.Time{}, resp.EndedAt)
+	assert.Equal(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-1, 0, 0, 0, 0, time.UTC), resp.StartedAt)
+	assert.Equal(2, resp.Streak)
+
+}
+func TestGithubService_GetLongestContributionStreakByUsername__NoContributionDays(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
+
+	ctx := context.Background()
+
+	username := "devy"
+	year := time.Now()
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionYears"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionYears)
+		(*a) = contributionYears{
+			User: userContributionYears{
+				ContributionsCollection: contributionsCollectionContributionYears{
+					ContributionYears: []int{
+						year.Year(),
+					},
+				},
+			},
+		}
+	}).Once()
+
+	from := time.Date(year.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionsQuery"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
+			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionsQuery)
+		(*a) = contributionsQuery{
+			User: user{
+				ContributionsCollection: contributionsCollection{
+					ContributionCalendar: contributionCalendar{
+						TotalContributions: 100,
+						Weeks: []week{
+							{
+								[]contributionDays{},
+							},
+						},
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetLongestContributionStreakByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(time.Time{}, resp.EndedAt)
+	assert.Equal(time.Time{}, resp.StartedAt)
+	assert.Equal(0, resp.Streak)
 }
 
 // TODO Tests: TotalContribution.String()
