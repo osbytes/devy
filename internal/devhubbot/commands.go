@@ -177,15 +177,6 @@ func contributionsTotalCommandHandler(session *discordgo.Session, message *disco
 }
 
 func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
-	guild, err := guildFromStateF(session.State, message.GuildID)
-	if err != nil {
-		infra.Logger.Error().Err(err).Msg("guild from message.GuildID")
-
-		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
-
-		return
-	}
-
 	devyDeveloperRoleID := env.GetString("DISCORD_DEVY_DEVELOPER_ROLE_ID", "")
 	if len(devyDeveloperRoleID) == 0 {
 		infra.Logger.Error().Msg("DISCORD_DEVY_DEVELOPER_ROLE_ID env not set")
@@ -195,17 +186,8 @@ func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.
 		return
 	}
 
-	member, err := memberFromStateF(session.State, guild.ID, message.Author.ID)
-	if err != nil {
-		infra.Logger.Error().Err(err).Msg("member from state")
-
-		_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("something went wrong toggle devy developer role for user %s", message.Author.Username))
-
-		return
-	}
-
 	currentlyHasRole := false
-	for _, roleID := range member.Roles {
+	for _, roleID := range message.Member.Roles {
 		if roleID == devyDeveloperRoleID {
 			currentlyHasRole = true
 		}
@@ -213,7 +195,7 @@ func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.
 
 	var action string
 	if currentlyHasRole {
-		err = guildMemberRoleRemoveF(session, guild.ID, message.Author.ID, devyDeveloperRoleID)
+		err := guildMemberRoleRemoveF(session, message.GuildID, message.Author.ID, devyDeveloperRoleID)
 		if err != nil {
 			infra.Logger.Error().Err(err).Msg("guild member role remove")
 
@@ -224,7 +206,7 @@ func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.
 
 		action = "removed"
 	} else {
-		err = guildMemberRoleAddF(session, guild.ID, message.Author.ID, devyDeveloperRoleID)
+		err := guildMemberRoleAddF(session, message.GuildID, message.Author.ID, devyDeveloperRoleID)
 		if err != nil {
 			infra.Logger.Error().Err(err).Msg("guild member role add")
 
