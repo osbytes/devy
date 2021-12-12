@@ -14,8 +14,6 @@ import (
 var (
 	channelFromStateF      = channelFromState
 	channelMessageSendF    = channelMessageSend
-	guildFromStateF        = guildFromState
-	memberFromStateF       = memberFromState
 	guildMemberRoleRemoveF = guildMemberRoleRemove
 	guildMemberRoleAddF    = guildMemberRoleAdd
 )
@@ -26,14 +24,6 @@ func channelFromState(s *discordgo.State, channelID string) (*discordgo.Channel,
 
 func channelMessageSend(s *discordgo.Session, channelID, message string) (*discordgo.Message, error) {
 	return s.ChannelMessageSend(channelID, message)
-}
-
-func guildFromState(s *discordgo.State, guildID string) (*discordgo.Guild, error) {
-	return s.Guild(guildID)
-}
-
-func memberFromState(s *discordgo.State, guildID, userID string) (*discordgo.Member, error) {
-	return s.Member(guildID, userID)
 }
 
 func guildMemberRoleAdd(s *discordgo.Session, guildID, userID, roleID string) error {
