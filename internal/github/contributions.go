@@ -232,7 +232,7 @@ type LongestContributionStreak struct {
 
 func (c LongestContributionStreak) String() string {
 	startAt := c.StartedAt.Format("2006-01-02")
-	msg := fmt.Sprintf("longest contribution streak")
+	msg := "longest contribution streak"
 
 	if c.EndedAt.IsZero() {
 		return fmt.Sprintf("%s\nstreak: %d days\nstarted at: %s", msg, c.Streak, startAt)
