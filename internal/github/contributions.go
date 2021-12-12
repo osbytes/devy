@@ -169,15 +169,18 @@ func (g *GithubService) GetFirstContributionYearByUsername(ctx context.Context, 
 }
 
 type CurrentContributionStreak struct {
-	Streak    int
-	StartedAt time.Time
+	Streak        int
+	Contributions int
+	StartedAt     time.Time
 }
 
 func (c CurrentContributionStreak) String() string {
-	msg := fmt.Sprintf("current contribution streak: %d days", c.Streak)
+	msg := fmt.Sprintf("current contribution streak\nstreak: %d days", c.Streak)
 	if c.Streak > 0 {
-		msg = fmt.Sprintf("%s started at: %s", msg, c.StartedAt.Format("2006-01-02"))
+		msg = fmt.Sprintf("%s\nstarted at: %s", msg, c.StartedAt.Format("2006-01-02"))
 	}
+
+	msg = fmt.Sprintf("%s\ncontributions: %d", msg, c.Contributions)
 
 	return msg
 }
@@ -212,6 +215,8 @@ func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Conte
 		}
 		currentContributionStreak.StartedAt = d.Date
 
+		currentContributionStreak.Contributions += d.ContributionCount
+
 		currentContributionStreak.Streak++
 	}
 
@@ -219,16 +224,21 @@ func (g *GithubService) GetCurrentContributionStreakByUsername(ctx context.Conte
 }
 
 type LongestContributionStreak struct {
-	Streak    int
-	StartedAt time.Time
-	EndedAt   time.Time
+	Streak        int
+	Contributions int
+	StartedAt     time.Time
+	EndedAt       time.Time
 }
 
 func (c LongestContributionStreak) String() string {
+	startAt := c.StartedAt.Format("2006-01-02")
+	msg := fmt.Sprintf("longest contribution streak")
+
 	if c.EndedAt.IsZero() {
-		return fmt.Sprintf("longest and current contribution streak: %d days started at: %s", c.Streak, c.StartedAt.Format("2006-01-02"))
+		return fmt.Sprintf("%s\nstreak: %d days\nstarted at: %s", msg, c.Streak, startAt)
 	}
-	return fmt.Sprintf("longest contribution streak: %d days started at: %s ended at: %s", c.Streak, c.StartedAt.Format("2006-01-02"), c.EndedAt.Format("2006-01-02"))
+
+	return fmt.Sprintf("%s\nstreak: %d days\nstarted at: %s\nended at: %s\ncontributions: %d", msg, c.Streak, startAt, c.EndedAt.Format("2006-01-02"), c.Contributions)
 }
 
 func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Context, username string) (*LongestContributionStreak, error) {
@@ -265,14 +275,17 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 	startedAt := time.Time{}
 	endedAt := time.Time{}
 	streak := 0
+	contributionCount := 0
 	for _, d := range days {
 		if d.ContributionCount == 0 {
 			if streak > longestContributionStreak.Streak {
 				longestContributionStreak.Streak = streak
 				longestContributionStreak.StartedAt = startedAt
 				longestContributionStreak.EndedAt = endedAt
+				longestContributionStreak.Contributions = contributionCount
 			}
 
+			contributionCount = 0
 			streak = 0
 
 			continue
@@ -283,7 +296,9 @@ func (g *GithubService) GetLongestContributionStreakByUsername(ctx context.Conte
 		}
 		startedAt = d.Date
 
+		contributionCount += d.ContributionCount
 		streak++
+
 	}
 
 	now := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
