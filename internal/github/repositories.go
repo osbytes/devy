@@ -20,7 +20,7 @@ type LastRepo struct {
 func (c LastRepo) String() string {
 	msg := fmt.Sprintf("\nThe last repo updated \n\n **%v** \n \t %v \n %v \n Created At: %s \n Updated At: %s", c.Name, c.Description, c.URL, c.CreatedAt.Format("2006-01-02"), c.UpdatedAt.Format("2006-01-02"))
 	if len(c.Name) == 0 {
-		msg = fmt.Sprintf("Could not find a repository")
+		msg = "Could not find a repository"
 	}
 
 	return msg
