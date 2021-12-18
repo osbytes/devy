@@ -556,12 +556,6 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoContributionDay
 	assert.Equal(0, resp.Streak)
 }
 
-// TODO Tests: TotalContribution.String()
-// labels: tests, good first issue
-func TestTotalContribution_String(t *testing.T) {
-
-}
-
 func TestGithubService_GetTotalContributionsByUsername(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
