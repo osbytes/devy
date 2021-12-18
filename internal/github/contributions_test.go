@@ -281,8 +281,6 @@ func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
 	}
 }
 
-// TODO Tests: GetFirstContributionYearByUsername
-// labels: tests, good first issue
 func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
