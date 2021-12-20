@@ -243,16 +243,44 @@ func TestGithubService_GetContributionsByUsername__DatesZeroValue(t *testing.T) 
 	githubClient.AssertExpectations(t)
 }
 
-// TODO Tests: error table test on GetContributionsByUsername
-// labels: tests, good first issue
-// Need to run a table test on GetContributionsByUsername to hit
-// ErrMissingUsername and ErrToDateBeforeFromDate
 func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
 
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		options GetContributionsByUsernameOptions
+		wantErr error
+	}{
+		{
+			name:    "test for ErrMissingUsername",
+			options: GetContributionsByUsernameOptions{},
+			wantErr: ErrMissingUsername,
+		},
+		{
+			name: "test for ErrToDateBeforeFromDate",
+			options: GetContributionsByUsernameOptions{
+				Username: "test",
+				From:     time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC),
+				To:       time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
+			},
+			wantErr: ErrToDateBeforeFromDate,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := githubService.GetContributionsByUsername(ctx, tt.options)
+
+			assert.Nil(resp)
+			assert.Equal(tt.wantErr, err)
+		})
+	}
 }
 
-// TODO Tests: GetFirstContributionYearByUsername
-// labels: tests, good first issue
 func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
