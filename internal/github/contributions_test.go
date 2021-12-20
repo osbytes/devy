@@ -256,12 +256,12 @@ func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "test ErrMissingUsername",
+			name:    "test for ErrMissingUsername",
 			options: GetContributionsByUsernameOptions{},
 			wantErr: ErrMissingUsername,
 		},
 		{
-			name: "test ErrMissingUsername",
+			name: "test for ErrToDateBeforeFromDate",
 			options: GetContributionsByUsernameOptions{
 				Username: "test",
 				From:     time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC),
