@@ -1,6 +1,7 @@
 package github
 
 import (
+	"bot/pkg/date"
 	"context"
 	"testing"
 	"time"
@@ -191,9 +192,9 @@ func TestGithubService_GetContributionsByUsername__DatesZeroValue(t *testing.T) 
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(time.Now().AddDate(-1, 0, 0), params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(options.Username) == params["username"]
+			return githubv4.String(options.Username) == params["username"] &&
+				date.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(time.Now().AddDate(-1, 0, 0), params["from"].(githubv4.DateTime).Time, time.Millisecond)
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
@@ -378,9 +379,9 @@ func TestGithubService_GetLongestContributionStreakByUsername(t *testing.T) {
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(username) == params["username"]
+			return githubv4.String(username) == params["username"] &&
+				date.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
@@ -471,9 +472,9 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoEndDateCurrentS
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(username) == params["username"]
+			return githubv4.String(username) == params["username"] &&
+				date.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
@@ -554,9 +555,9 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoContributionDay
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(username) == params["username"]
+			return githubv4.String(username) == params["username"] &&
+				date.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(year, params["to"].(githubv4.DateTime).Time, time.Millisecond)
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
@@ -621,9 +622,9 @@ func TestGithubService_GetTotalContributionsByUsername(t *testing.T) {
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(year, params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(username) == params["username"]
+			return githubv4.String(username) == params["username"] &&
+				date.WithinDuration(year, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond)
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
