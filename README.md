@@ -4,6 +4,7 @@
 <img src="./devy.svg" height="175">
 
 A developer focused discord bot written in go
+
 </p>
 
 ## How to Get Started
@@ -52,6 +53,8 @@ godotenv -f .env go run cmd/bot/main.go
 - Fork the project
 - Push changes
 - Create a PR and add reveiwers
+
+Note: If you grab an issue that is labled TODO, please delete the TODO comment.
 
 ## How to Test on a Test Bot
 

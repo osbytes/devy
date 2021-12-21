@@ -243,16 +243,44 @@ func TestGithubService_GetContributionsByUsername__DatesZeroValue(t *testing.T) 
 	githubClient.AssertExpectations(t)
 }
 
-// TODO Tests: error table test on GetContributionsByUsername
-// labels: tests, good first issue
-// Need to run a table test on GetContributionsByUsername to hit
-// ErrMissingUsername and ErrToDateBeforeFromDate
 func TestGithubService_GetContributionsByUsername__Errors(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
 
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		options GetContributionsByUsernameOptions
+		wantErr error
+	}{
+		{
+			name:    "test for ErrMissingUsername",
+			options: GetContributionsByUsernameOptions{},
+			wantErr: ErrMissingUsername,
+		},
+		{
+			name: "test for ErrToDateBeforeFromDate",
+			options: GetContributionsByUsernameOptions{
+				Username: "test",
+				From:     time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC),
+				To:       time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
+			},
+			wantErr: ErrToDateBeforeFromDate,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := githubService.GetContributionsByUsername(ctx, tt.options)
+
+			assert.Nil(resp)
+			assert.Equal(tt.wantErr, err)
+		})
+	}
 }
 
-// TODO Tests: GetFirstContributionYearByUsername
-// labels: tests, good first issue
 func TestGithubService_GetFirstContributionYearByUsername(t *testing.T) {
 	assert := assert.New(t)
 	githubClient := &MockGithubClient{}
@@ -613,14 +641,63 @@ func TestGithubService_GetLongestContributionStreakByUsername__NoContributionDay
 	assert.Equal(0, resp.Streak)
 }
 
-// TODO Tests: TotalContribution.String()
-// labels: tests, good first issue
-func TestTotalContribution_String(t *testing.T) {
-
-}
-
-// TODO Tests: GetTotalContributionsByUsername
-// labels: tests, good first issue
 func TestGithubService_GetTotalContributionsByUsername(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
 
+	ctx := context.Background()
+
+	username := "devy"
+	to := time.Now()
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionYears"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionYears)
+		(*a) = contributionYears{
+			User: userContributionYears{
+				ContributionsCollection: contributionsCollectionContributionYears{
+					ContributionYears: []int{
+						to.Year(),
+					},
+				},
+			},
+		}
+	}).Once()
+
+	year := time.Date(to.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionsQuery"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			assert.WithinDuration(year, params["from"].(githubv4.DateTime).Time, time.Millisecond)
+			assert.WithinDuration(time.Now(), params["to"].(githubv4.DateTime).Time, time.Millisecond)
+			return githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionsQuery)
+		(*a) = contributionsQuery{
+			User: user{
+				ContributionsCollection: contributionsCollection{
+					ContributionCalendar: contributionCalendar{
+						TotalContributions: 1000,
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetTotalContributionsByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(resp.String(), "total github contributions: 1000")
+	assert.Equal(resp.Total, 1000)
 }
