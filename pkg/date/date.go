@@ -27,9 +27,6 @@ func EOY(t time.Time, loc *time.Location) time.Time {
 // WithinDuration test to see if two time.Time's are within a duration of eachother
 func WithinDuration(expected, actual time.Time, delta time.Duration) bool {
 	dt := expected.Sub(actual)
-	if dt < -delta || dt > delta {
-		return false
-	}
 
-	return true
+	return dt > -delta && dt < delta
 }
