@@ -23,3 +23,10 @@ func SOY(t time.Time, loc *time.Location) time.Time {
 func EOY(t time.Time, loc *time.Location) time.Time {
 	return time.Date(t.Year(), 12, 31, 59, 59, 0, 0, loc)
 }
+
+// WithinDuration test to see if two time.Time's are within a duration of eachother
+func WithinDuration(expected, actual time.Time, delta time.Duration) bool {
+	dt := expected.Sub(actual)
+
+	return dt > -delta && dt < delta
+}
