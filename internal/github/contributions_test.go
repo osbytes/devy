@@ -330,9 +330,66 @@ func TestCurrentContributionStreak_String__NoStreak(t *testing.T) {
 
 }
 
-// TODO Tests: GetCurrentContributionStreakByUsername
-// labels: tests
 func TestGithubService_GetCurrentContributionStreakByUsername(t *testing.T) {
+	assert := assert.New(t)
+	githubClient := &MockGithubClient{}
+	githubService := NewGithubService(githubClient)
+
+	ctx := context.Background()
+
+	username := "devy"
+	to := time.Now()
+
+	from := time.Date(to.Year()-1, to.Month(), to.Day(), to.Hour(), to.Minute(), to.Second(), to.Nanosecond(), to.Location())
+
+	githubClient.On(
+		"Query",
+		ctx,
+		mock.AnythingOfType("*github.contributionsQuery"),
+		mock.MatchedBy(func(params map[string]interface{}) bool {
+			return date.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(to, params["to"].(githubv4.DateTime).Time, time.Millisecond) &&
+				githubv4.String(username) == params["username"]
+		}),
+	).Return(nil).Run(func(args mock.Arguments) {
+		a := args.Get(1).(*contributionsQuery)
+		(*a) = contributionsQuery{
+			User: user{
+				ContributionsCollection: contributionsCollection{
+					ContributionCalendar: contributionCalendar{
+						TotalContributions: 100,
+						Weeks: []week{
+							{
+								[]contributionDays{
+									{
+										ContributionCount: 5,
+										Weekday:           7,
+										Date:              time.Date(time.Now().Year(), 7, 10, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 5,
+										Weekday:           6,
+										Date:              time.Date(time.Now().Year(), 7, 9, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+									{
+										ContributionCount: 0,
+										Weekday:           5,
+										Date:              time.Date(time.Now().Year(), 7, 8, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}).Once()
+
+	resp, err := githubService.GetCurrentContributionStreakByUsername(ctx, username)
+
+	assert.NoError(err)
+	assert.Equal(time.Date(time.Now().Year(), 7, 9, 0, 0, 0, 0, time.UTC), resp.StartedAt)
+	assert.Equal(2, resp.Streak)
 
 }
 
