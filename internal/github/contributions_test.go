@@ -347,9 +347,9 @@ func TestGithubService_GetCurrentContributionStreakByUsername(t *testing.T) {
 		ctx,
 		mock.AnythingOfType("*github.contributionsQuery"),
 		mock.MatchedBy(func(params map[string]interface{}) bool {
-			assert.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond)
-			assert.WithinDuration(to, params["to"].(githubv4.DateTime).Time, time.Millisecond)
-			return githubv4.String(username) == params["username"]
+			return date.WithinDuration(from, params["from"].(githubv4.DateTime).Time, time.Millisecond) &&
+				date.WithinDuration(to, params["to"].(githubv4.DateTime).Time, time.Millisecond) &&
+				githubv4.String(username) == params["username"]
 		}),
 	).Return(nil).Run(func(args mock.Arguments) {
 		a := args.Get(1).(*contributionsQuery)
