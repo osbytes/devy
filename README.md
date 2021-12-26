@@ -4,9 +4,15 @@
     <img src="./devy.svg" height="175">
 </p>
 
-<a align="center" href="https://codecov.io/gh/osbytes/devy">
-    <img src="https://codecov.io/gh/osbytes/devy/branch/main/graph/badge.svg" alt="codecov" />
-</a>
+<p align="center">
+    <a href="https://codecov.io/gh/osbytes/devy">
+        <img src="https://codecov.io/gh/osbytes/devy/branch/main/graph/badge.svg" alt="codecov" />
+    </a>
+    <a href="https://github.com/osbytes/devy/blob/main/LICENSE">
+        <img src="https://img.shields.io/github/license/osbytes/devy.svg" alt="License" />
+    </a>
+</p>
+
 
 A developer focused discord bot written in go
 
