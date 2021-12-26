@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bot/internal/devhubbot"
+	"bot/internal/devy"
 	"bot/internal/github"
 	"bot/pkg/colors"
 	"bot/pkg/env"
@@ -18,11 +18,13 @@ import (
 )
 
 const banner = `
-     _            _           _     _           _
-  __| | _____   _| |__  _   _| |__ | |__   ___ | |_
- / _  |/ _ \ \ / / '_ \| | | | '_ \| '_ \ / _ \| __|
-| (_| |  __/\ V /| | | | |_| | |_) | |_) | (_) | |_ 
- \__,_|\___| \_/ |_| |_|\__,_|_.__/|_.__/ \___/ \__|
+ ______   _______  __   __  __   __
+|      | |       ||  | |  ||  | |  |
+|  _    ||    ___||  |_|  ||  |_|  |
+| | |   ||   |___ |       ||       |
+| |_|   ||    ___||       ||_     _|
+|       ||   |___  |     |   |   |
+|______| |_______|  |___|    |___|
 `
 
 func main() {
@@ -52,7 +54,7 @@ func main() {
 
 	githubService := github.NewGithubService(client)
 
-	bot := devhubbot.NewBot(discord, githubService)
+	bot := devy.NewBot(discord, githubService)
 
 	go func() {
 		infra.Logger.Info().Msg("starting bot")

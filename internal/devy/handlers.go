@@ -1,4 +1,4 @@
-package devhubbot
+package devy
 
 import (
 	"strings"

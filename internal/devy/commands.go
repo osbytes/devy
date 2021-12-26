@@ -1,4 +1,4 @@
-package devhubbot
+package devy
 
 import (
 	"bot/pkg/env"
@@ -88,7 +88,7 @@ var commandMap = map[string]Command{
 		Description: "Get the latest repo the user has updated",
 		Args:        []string{"github username"},
 		Handler:     lastUpdatedRepoCommandHandler,
-  },
+	},
 	"!devydeveloper": {
 		Name:        "!devydeveloper",
 		Description: "toggle devy developer role to add/remove access to devy development channels",
