@@ -1,11 +1,15 @@
-<p align="center">
-<h1 style="border-bottom: none;">Devy</h1>
+<h1 style="border-bottom: none;" align="center">Devy</h1>
 
-<img src="./devy.svg" height="175">
+<p align="center">
+    <img src="./devy.svg" height="175">
+</p>
+
+<a align="center" href="https://codecov.io/gh/osbytes/devy">
+    <img src="https://codecov.io/gh/osbytes/devy/branch/main/graph/badge.svg" alt="codecov" />
+</a>
 
 A developer focused discord bot written in go
 
-</p>
 
 ## How to Get Started
 
