@@ -1,6 +1,7 @@
 package devy
 
 import (
+	"bot/pkg/infra"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -62,5 +63,41 @@ func (b *Bot) messageCreate(session *discordgo.Session, message *discordgo.Messa
 	}
 
 	command.Handler(session, message, channel, b)
+
+}
+
+func (b *Bot) messageReactionAdd(session *discordgo.Session, message *discordgo.MessageReactionAdd) {
+	// Ignore all messages created by the bot itself
+	// This isn't required in this specific example but it's a good practice.
+	if message.UserID == session.State.User.ID {
+		return
+	}
+
+	msg, err := channelMessageF(session, message.ChannelID, message.MessageID)
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("get channel message")
+
+		return
+	}
+
+	if !strings.HasPrefix(msg.Content, pollPrefix) {
+		return
+	}
+
+	// remove emoji if not one of poll emojis
+	// TODO: need a better way to determine if the reaction emoji is one of the poll emojis. This code does not consider that the question itself may contain an emoji and that emoji would be allowed to be used in the reactions
+	if !strings.Contains(msg.Content, message.Emoji.Name) {
+		_ = messageReactionRemoveF(session, message.ChannelID, message.MessageID, message.Emoji.Name, message.UserID)
+
+		return
+	}
+
+	for _, reaction := range msg.Reactions {
+		if reaction.Emoji.Name == message.MessageReaction.Emoji.Name {
+			continue
+		}
+
+		_ = messageReactionRemoveF(session, message.ChannelID, message.MessageID, reaction.Emoji.Name, message.UserID)
+	}
 
 }

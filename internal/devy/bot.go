@@ -2,10 +2,16 @@ package devy
 
 import (
 	"bot/internal/github"
+	"bot/pkg/unicode"
 	"context"
+	"fmt"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
+)
+
+var (
+	pollPrefix = fmt.Sprintf("%s **POLL**", unicode.Emojis[":memo:"])
 )
 
 type Bot struct {
@@ -29,6 +35,8 @@ func (b Bot) Start(ctx context.Context) error {
 	b.discord.AddHandler(b.guildCreate)
 
 	b.discord.AddHandler(b.messageCreate)
+
+	b.discord.AddHandler(b.messageReactionAdd)
 
 	select {
 	case <-ctx.Done():
