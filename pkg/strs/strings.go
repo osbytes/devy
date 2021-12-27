@@ -1,6 +1,7 @@
 package strs
 
-func AllBetweenPattern(s, pattern string) []string {
+// TODO: there is probably a simplification in the logic in this method AllBetweenPattern. We unfortunately can't use a regular expression since go does not support before text matching (?=re) https://github.com/google/re2/wiki/Syntax https://github.com/google/re2/wiki/WhyRE2
+func AllBetweenPattern(str, pattern string) []string {
 	stringsMatched := []string{}
 
 	matchingPatternIdx := 0
@@ -8,8 +9,8 @@ func AllBetweenPattern(s, pattern string) []string {
 
 	currentMatch := ""
 
-	for _, c := range s {
-		if byte(c) == pattern[matchingPatternIdx] {
+	for _, char := range str {
+		if byte(char) == pattern[matchingPatternIdx] {
 			matchingPatternIdx++
 
 			if !patternMatched && matchingPatternIdx == len(pattern) {
@@ -20,7 +21,7 @@ func AllBetweenPattern(s, pattern string) []string {
 		}
 
 		if patternMatched {
-			currentMatch += string(c)
+			currentMatch += string(char)
 
 			if matchingPatternIdx == len(pattern) {
 				patternMatched = false

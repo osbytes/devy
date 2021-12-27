@@ -24,6 +24,14 @@ func TestAllBetweenPattern(t *testing.T) {
 			want: []string{},
 		},
 		{
+			name: "empty string between pattern",
+			args: args{
+				s:       "abcabcabc",
+				pattern: "abc",
+			},
+			want: []string{""},
+		},
+		{
 			name: "multi string pattern single match",
 			args: args{
 				s:       "abcsome text to extractabc",

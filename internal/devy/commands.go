@@ -1,8 +1,10 @@
 package devy
 
 import (
+	"bot/pkg/emoji"
 	"bot/pkg/env"
 	"bot/pkg/infra"
+	"bot/pkg/strs"
 	"context"
 	"fmt"
 	"strings"
@@ -16,6 +18,9 @@ var (
 	channelMessageSendF    = channelMessageSend
 	guildMemberRoleRemoveF = guildMemberRoleRemove
 	guildMemberRoleAddF    = guildMemberRoleAdd
+	messageReactionAddF    = messageReactionAdd
+	messageReactionRemoveF = messageReactionRemove
+	channelMessageF        = channelMessage
 )
 
 func channelFromState(s *discordgo.State, channelID string) (*discordgo.Channel, error) {
@@ -32,6 +37,18 @@ func guildMemberRoleAdd(s *discordgo.Session, guildID, userID, roleID string) er
 
 func guildMemberRoleRemove(s *discordgo.Session, guildID, userID, roleID string) error {
 	return s.GuildMemberRoleRemove(guildID, userID, roleID)
+}
+
+func messageReactionAdd(s *discordgo.Session, channelID, messageID, emojiID string) error {
+	return s.MessageReactionAdd(channelID, messageID, emojiID)
+}
+
+func messageReactionRemove(s *discordgo.Session, channelID, messageID, emojiID, userID string) error {
+	return s.MessageReactionRemove(channelID, messageID, emojiID, userID)
+}
+
+func channelMessage(s *discordgo.Session, channelID, messageID string) (*discordgo.Message, error) {
+	return s.ChannelMessage(channelID, messageID)
 }
 
 type CommandHandler func(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot)
@@ -94,6 +111,12 @@ var commandMap = map[string]Command{
 		Description: "toggle devy developer role to add/remove access to devy development channels",
 		Args:        []string{},
 		Handler:     devyDeveloperCommandHandler,
+	},
+	"!poll": {
+		Name:        "!poll",
+		Description: "creates a poll in the poll channel if specified on devy or the current channel. question and options must be wrapped with double quotes (\"question...\" \"option 1\" \"option 2\")",
+		Args:        []string{"question", "option", "option..."},
+		Handler:     pollCommandHandler,
 	},
 }
 
@@ -265,4 +288,49 @@ func devyDeveloperCommandHandler(session *discordgo.Session, message *discordgo.
 	}
 
 	_, _ = channelMessageSendF(session, channel.ID, fmt.Sprintf("%s devy developer role for user %s", action, message.Author.Username))
+}
+
+func pollCommandHandler(session *discordgo.Session, message *discordgo.MessageCreate, channel *discordgo.Channel, bot *Bot) {
+	pollChannelID := env.GetString("DISCORD_POLL_CHANNEL_ID", "")
+	if len(pollChannelID) == 0 {
+		pollChannelID = message.ChannelID
+	}
+
+	arguments := strs.AllBetweenPattern(message.Content, "\"")
+	if len(arguments) <= 2 {
+		_, _ = channelMessageSendF(session, channel.ID, "polls must have more than one option")
+
+		return
+	}
+
+	question := arguments[0]
+	options := arguments[1:]
+
+	emojis := []string{}
+	for _, e := range emoji.Emojis {
+		emojis = append(emojis, e)
+		if len(emojis) == len(options) {
+			break
+		}
+	}
+
+	pollMessageStr := fmt.Sprintf("%s\n\n", question)
+
+	for i, e := range emojis {
+		pollMessageStr += fmt.Sprintf("\t%s\t%s\n", e, options[i])
+	}
+
+	msg, err := channelMessageSendF(session, pollChannelID, fmt.Sprintf("%s\n\n%s", pollPrefix, pollMessageStr))
+	if err != nil {
+		infra.Logger.Error().Err(err).Msg("channel message send")
+
+		_, _ = channelMessageSendF(session, pollChannelID, "something went wrong creating poll")
+
+		return
+	}
+
+	for _, emj := range emojis {
+		_ = messageReactionAddF(session, pollChannelID, msg.ID, emj)
+	}
+
 }
