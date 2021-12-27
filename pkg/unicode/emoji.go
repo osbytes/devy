@@ -1,4 +1,4 @@
-package emoji
+package unicode
 
 var Emojis = map[string]string{
 	":1st_place_medal:":                    "🥇",

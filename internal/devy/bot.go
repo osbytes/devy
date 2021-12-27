@@ -2,7 +2,7 @@ package devy
 
 import (
 	"bot/internal/github"
-	"bot/pkg/emoji"
+	"bot/pkg/unicode"
 	"context"
 	"fmt"
 
@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	pollPrefix = fmt.Sprintf("%s **POLL**", emoji.Emojis[":memo:"])
+	pollPrefix = fmt.Sprintf("%s **POLL**", unicode.Emojis[":memo:"])
 )
 
 type Bot struct {

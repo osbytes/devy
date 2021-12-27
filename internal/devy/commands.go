@@ -1,10 +1,10 @@
 package devy
 
 import (
-	"bot/pkg/emoji"
 	"bot/pkg/env"
 	"bot/pkg/infra"
 	"bot/pkg/strs"
+	"bot/pkg/unicode"
 	"context"
 	"fmt"
 	"strings"
@@ -307,7 +307,7 @@ func pollCommandHandler(session *discordgo.Session, message *discordgo.MessageCr
 	options := arguments[1:]
 
 	emojis := []string{}
-	for _, e := range emoji.Emojis {
+	for _, e := range unicode.Emojis {
 		emojis = append(emojis, e)
 		if len(emojis) == len(options) {
 			break
