@@ -13,9 +13,7 @@
     </a>
 </p>
 
-
 A developer focused discord bot written in go
-
 
 ## How to Get Started
 
@@ -111,8 +109,22 @@ func TestGithubService_GetContributionsByUsername__MultiYear(t *testing.T) {
 
 Run the command below to mock all of your interfaces
 
+Pull mockery docker image
+
 ```sh
-mockery --all --inpackage
+docker pull vektra/mockery
+```
+
+Run this in devy, replace pwd with root pwd
+
+```sh
+docker run -v "$PWD":/src -w /src vektra/mockery --all
+```
+
+For in package
+
+```sh
+docker run -v "$PWD":/src -w /src vektra/mockery --all --inpackage
 ```
 
 If you need to monkey patch or create pointer functions follow this convention
