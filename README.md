@@ -121,6 +121,12 @@ Run this in devy, replace pwd with root pwd
 docker run -v "$PWD":/src -w /src vektra/mockery --all
 ```
 
+For in package
+
+```sh
+docker run -v "$PWD":/src -w /src vektra/mockery --all --inpackage
+```
+
 If you need to monkey patch or create pointer functions follow this convention
 
 ```go
