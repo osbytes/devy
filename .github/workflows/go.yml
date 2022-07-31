@@ -15,13 +15,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
 
-      - name: Install mockery
-        run: go get github.com/vektra/mockery/v2/.../
+      - name: Pull mockery docker image
+        run: docker pull vektra/mockery
 
-      - name: Create mocks
-        run: mockery --all --inpackage
+      - name: Run mockery
+        run: docker run -v ${{ github.workspace }}:/src -w /src vektra/mockery --all --inpackage
 
       - name: Build
         run: go build -v ./...
