@@ -17,10 +17,10 @@ jobs:
         with:
           go-version: 1.18
 
-      - name: Docker container
-        uses: docker/vektra/mockery
+      - name: Pull mockery docker image
+        run: docker pull vektra/mockery
 
-      - name: Run mockery from container
+      - name: Run mockery
         run: docker run -v ${{ github.workspace }}:/src -w /src vektra/mockery --all --inpackage
 
       - name: Build
